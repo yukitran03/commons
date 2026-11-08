@@ -50,5 +50,5 @@ export function kindName(kind: ProposalKind): "transfer" | "add_member_to_role" 
 }
 
 export const DAO_DEPOSIT = 6n * NEAR;
-/** 0.3 NEAR for each new member: enough gas for many votes and chip-ins. */
-export const MEMBER_FUNDING = 3n * 10n ** 23n;
+/** 0.5 NEAR for each new member. NEAR reserves prepaid gas at a pessimistic price (about 0.1 NEAR for a 100 Tgas vote), so members need headroom beyond what they chip in. */
+export const MEMBER_FUNDING = 5n * 10n ** 23n;

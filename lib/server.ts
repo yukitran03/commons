@@ -1,7 +1,7 @@
 // Server-side wiring from environment variables. Route handlers and pages import from here.
 import { openDb, type Db } from "./db.ts";
 import { RpcChain } from "./near/rpcChain.ts";
-import { nearConfig } from "./near/config.ts";
+import { nearConfig, rpcUrls } from "./near/config.ts";
 import { httpTg } from "./telegram.ts";
 import { verifyInitData, type TgUser } from "./tgauth.ts";
 import type { Deps } from "./pot.ts";
@@ -14,7 +14,7 @@ export function getDb(): Promise<Db> {
 /** Read-only chain access: needs no keys (ledger page, verify). */
 export function readChain(): RpcChain {
   const c = nearConfig();
-  return new RpcChain({ network: c.network, rpcUrl: c.rpcUrl, factory: c.factory });
+  return new RpcChain({ network: c.network, rpcUrl: c.rpcUrl, factory: c.factory, fallbackUrls: rpcUrls(c).slice(1) });
 }
 
 function need(k: string): string {

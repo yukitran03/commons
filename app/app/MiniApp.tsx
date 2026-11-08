@@ -319,7 +319,7 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
         contractId: info.daoId,
         methodName: "act_proposal",
         args: { id, action, proposal: p.kind },
-        gas: teraToGas("150"),
+        gas: teraToGas("100"),
       });
       setTx(r.transaction.hash);
       haptic("success");
@@ -440,18 +440,33 @@ function ChipIn({ info }: { info: PotInfo }) {
   );
 }
 
+/** Kept back from chip-ins: NEAR reserves prepaid gas at a pessimistic price, so a vote needs about 0.1 NEAR free. */
+const FEE_RESERVE = 2n * 10n ** 23n;
+
 function FromNear({ info }: { info: PotInfo }) {
   const [amount, setAmount] = useState("0.1");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [tx, setTx] = useState<string | null>(null);
+  const [mine, setMine] = useState<bigint | null>(null);
+
+  useEffect(() => {
+    if (!info.me) return;
+    new JsonRpcProvider({ url: info.rpcUrl })
+      .query({ request_type: "view_account", finality: "optimistic", account_id: info.me.accountId })
+      .then((a: any) => setMine(BigInt(a.amount) - BigInt(a.storage_usage) * 10n ** 19n))
+      .catch(() => setMine(null));
+  }, [info, tx]);
+
+  const available = mine === null ? null : mine > FEE_RESERVE ? mine - FEE_RESERVE : 0n;
   const valid = useMemo(() => {
     try {
-      return toUnits(amount, 24) > 0n;
+      const u = toUnits(amount, 24);
+      return u > 0n && (available === null || u <= available);
     } catch {
       return false;
     }
-  }, [amount]);
+  }, [amount, available]);
 
   if (!info.me) return <Notice tone="info">Join the pot first. Your NEAR account is created when you join.</Notice>;
   if (!info.daoId) return <Notice tone="info">The treasury does not exist yet.</Notice>;
@@ -489,6 +504,7 @@ function FromNear({ info }: { info: PotInfo }) {
       <p className="text-xs text-muted">
         From <Mono>{info.me.accountId}</Mono> to <Mono>{info.daoId}</Mono>
       </p>
+      {available !== null ? <p className="text-xs text-muted">You can chip in up to {near(available)}. {near(FEE_RESERVE)} stays in your account for voting fees.</p> : null}
       {err ? <Notice tone="bad">{err}</Notice> : null}
       {tx ? (
         <Notice tone="ok">

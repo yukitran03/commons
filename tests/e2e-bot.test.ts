@@ -46,7 +46,7 @@ describe("setting up a pot", () => {
     await joinFounders();
     expect((await memberByTg(w.db, CHAT, people.alice.id))).toMatchObject({ account_id: "alice.sponsor.testnet", role: "founder" });
     expect((await memberByTg(w.db, CHAT, people.bob.id))).toMatchObject({ account_id: "bob.sponsor.testnet", role: "founder" });
-    expect(await w.chain.balance("bob.sponsor.testnet")).toBe(3n * 10n ** 23n);
+    expect(await w.chain.balance("bob.sponsor.testnet")).toBe(5n * 10n ** 23n);
     expect(callbacks(w.tg.sent().at(-1))).toContain("create");
   });
 
@@ -81,13 +81,13 @@ describe("setting up a pot", () => {
     const first = await joinPot(w.deps, { ref, tgUser: people.alice, publicKey: w.publicKey() });
     const again = await joinPot(w.deps, { ref, tgUser: people.alice, publicKey: w.publicKey() });
     expect(again.accountId).toBe(first.accountId);
-    expect(await w.chain.balance("sponsor.testnet")).toBe(100n * NEAR - 3n * 10n ** 23n);
+    expect(await w.chain.balance("sponsor.testnet")).toBe(100n * NEAR - 5n * 10n ** 23n);
     await joinPot(w.deps, { ref, tgUser: people.bob, publicKey: w.publicKey() });
     const a = await createTreasury(w.deps, CHAT, people.alice.id);
     const b = await createTreasury(w.deps, CHAT, people.bob.id);
     expect(a.created).toBe(true);
     expect(b).toMatchObject({ daoId: a.daoId, created: false });
-    expect(await w.chain.balance("sponsor.testnet")).toBe(100n * NEAR - 6n * 10n ** 23n - 6n * NEAR);
+    expect(await w.chain.balance("sponsor.testnet")).toBe(100n * NEAR - 10n * 10n ** 23n - 6n * NEAR);
   });
 
   it("refuses a malformed public key", async () => {

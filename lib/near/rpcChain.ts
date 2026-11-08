@@ -12,15 +12,48 @@ const STORAGE_PRICE_PER_BYTE = 10n ** 19n;
 
 type TxResult = { transaction: { hash: string } };
 
+const TRANSIENT = /429|rate.?limit|too many requests|deprecated|ECONNRESET|ETIMEDOUT|ENOTFOUND|fetch failed|socket hang up|50[234]/i;
+
+/**
+ * Wraps several providers as one. Unlike near-api-js FailoverRpcProvider, it moves to the next endpoint only on
+ * transport trouble (rate limits, outages), never on answers like "account does not exist", which callers rely on.
+ */
+export function failover(providers: JsonRpcProvider[]): JsonRpcProvider {
+  if (providers.length === 1) return providers[0];
+  return new Proxy(providers[0], {
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver);
+      if (typeof value !== "function") return value;
+      return async (...args: unknown[]) => {
+        let last: unknown;
+        for (const p of providers) {
+          try {
+            return await (p as any)[prop](...args);
+          } catch (e) {
+            last = e;
+            if (!TRANSIENT.test(String((e as Error)?.message ?? e))) throw e;
+          }
+        }
+        throw last;
+      };
+    },
+  });
+}
+
+/** 100 Tgas is plenty for a vote that executes a transfer; NEAR reserves the prepaid amount at a pessimistic price. */
+export const ACT_GAS = teraToGas("100");
+
 export class RpcChain implements Chain {
   network: "testnet" | "mainnet";
   factory: string;
   provider: JsonRpcProvider;
 
-  constructor(o: { network: "testnet" | "mainnet"; rpcUrl: string; factory: string }) {
+  /** rpcUrl is tried first; a fallback is used only when an endpoint is rate limited or unreachable. */
+  constructor(o: { network: "testnet" | "mainnet"; rpcUrl: string; factory: string; fallbackUrls?: string[] }) {
     this.network = o.network;
     this.factory = o.factory;
-    this.provider = new JsonRpcProvider({ url: o.rpcUrl });
+    const urls = [...new Set([o.rpcUrl, ...(o.fallbackUrls ?? [])])];
+    this.provider = failover(urls.map((url) => new JsonRpcProvider({ url })));
   }
 
   signerFromKey(accountId: string, privateKey: string): RpcSigner {
@@ -86,7 +119,7 @@ export class RpcChain implements Chain {
       contractId: daoId,
       methodName: "act_proposal",
       args: { id, action, proposal: kind },
-      gas: teraToGas("150"),
+      gas: ACT_GAS,
     })) as unknown as TxResult;
     return { txHash: r.transaction.hash };
   }

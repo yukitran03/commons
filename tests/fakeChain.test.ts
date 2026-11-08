@@ -29,10 +29,10 @@ describe("FakeChain follows Sputnik rules", () => {
     expect(await chain.balance(daoId)).toBe(near(3));
   });
 
-  it("creates member accounts under the sponsor with 0.3 NEAR, once", async () => {
+  it("creates member accounts under the sponsor with 0.5 NEAR, once", async () => {
     const r = await chain.createMemberAccount(sponsor(), "huc", "ed25519:FakePublicKey111");
     expect(r.accountId).toBe("huc.sponsor.testnet");
-    expect(await chain.balance("huc.sponsor.testnet")).toBe(near(0.3));
+    expect(await chain.balance("huc.sponsor.testnet")).toBe(near(0.5));
     await expect(chain.createMemberAccount(sponsor(), "huc", "ed25519:FakePublicKey111")).rejects.toThrow("ERR_ACCOUNT_EXISTS");
   });
 

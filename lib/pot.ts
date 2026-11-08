@@ -203,6 +203,21 @@ export async function proposeSpend(d: Deps, chatId: number, from: TgUser, text: 
   return { ok: true, id };
 }
 
+/**
+ * RPC nodes can lag a block or two behind the one that ran a member's vote. Re-reads until that member's vote (or a
+ * final status) is visible, so the card we post is not stale. Only decides how long to wait, never what to report.
+ */
+export async function waitForVote(chain: Chain, daoId: string, id: number, accountId: string, o: { tries?: number; delayMs?: number } = {}): Promise<Proposal | null> {
+  const tries = o.tries ?? 8;
+  let p: Proposal | null = null;
+  for (let i = 0; i < tries; i++) {
+    p = await chain.getProposal(daoId, id).catch(() => null);
+    if (p && (p.votes[accountId] || FINAL.has(p.status))) return p;
+    if (i < tries - 1) await new Promise((r) => setTimeout(r, o.delayMs ?? 750));
+  }
+  return p;
+}
+
 async function nameOf(d: Deps, accountId: string): Promise<string> {
   return who(await memberByAccount(d.db, accountId), `<code>${accountId}</code>`);
 }

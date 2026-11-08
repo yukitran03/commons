@@ -64,7 +64,7 @@ export const copy = {
     const head = [`<b>Payment #${o.id}</b>`, `${o.amount} to ${o.to}`, `<code>${esc(o.accountId)}</code>`];
     if (o.reason) head.push(`For: ${esc(o.reason)}`);
     head.push(`Asked by ${o.askedBy}`);
-    return [...head, "", progress(o)].join("\n");
+    return [...head, "", o.status === "Approved" ? "Status: paid" : progress(o)].join("\n");
   },
 
   memberCard: (o: { id: number; who: string; accountId: string; approvals: string[]; needed: number; status: string }) =>
