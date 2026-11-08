@@ -74,6 +74,21 @@ describe("members", () => {
   });
 });
 
+describe("local persistence", () => {
+  it("keeps data across restarts with a pglite: URL", async () => {
+    const { mkdtempSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { tmpdir } = await import("node:os");
+    const dir = mkdtempSync(join(tmpdir(), "commons-db-"));
+    const a = await openDb(`pglite:${dir}`);
+    const pot = await ensurePot(a, -5, "Persisted", "testnet");
+    await (a as any).close?.();
+    const b = await openDb(`pglite:${dir}`);
+    expect((await potByChat(b, -5))?.ref).toBe(pot.ref);
+    await (b as any).close?.();
+  });
+});
+
 describe("proposals", () => {
   it("saves a proposal and records the announced status", async () => {
     await saveProposal(db, { daoId: "d.sputnikv2.testnet", proposalId: 3, chatId: -1001, tgMessageId: 77, kind: "transfer", summary: "1 NEAR to @huc" });

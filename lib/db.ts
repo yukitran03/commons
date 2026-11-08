@@ -69,20 +69,25 @@ const SCHEMA = [
   )`,
 ];
 
-export async function openDb(url?: string): Promise<Db> {
+/** url: a Postgres URL (Neon), "pglite:<dir>" for a local database that survives restarts, or empty for in-memory. */
+export async function openDb(url?: string): Promise<Db & { close?: () => Promise<void> }> {
   let exec: (sql: string, params: unknown[]) => Promise<Row[]>;
-  if (url) {
+  let close: (() => Promise<void>) | undefined;
+  if (url && !url.startsWith("pglite:")) {
     const { neon } = await import("@neondatabase/serverless");
     const sql = neon(url);
     exec = async (text, params) => (await sql.query(text, params as any[])) as Row[];
   } else {
     const { PGlite } = await import("@electric-sql/pglite");
-    const pg = new PGlite();
+    const dir = url?.slice("pglite:".length);
+    if (dir) (await import("node:fs")).mkdirSync(dir, { recursive: true });
+    const pg = dir ? new PGlite(dir) : new PGlite();
     await pg.waitReady;
     exec = async (text, params) => (await pg.query(text, params as any[])).rows as Row[];
+    close = () => pg.close();
   }
   for (const s of SCHEMA) await exec(s, []);
-  return { q: async <T extends Row = Row>(text: string, params: unknown[] = []) => (await exec(text, params)) as T[] };
+  return { q: async <T extends Row = Row>(text: string, params: unknown[] = []) => (await exec(text, params)) as T[], close };
 }
 
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
