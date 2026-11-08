@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+/* Design tokens. Web pages use the Commons palette (light and dark). Inside Telegram (.tg) the same tokens map to
+   Telegram's theme parameters, with the Commons palette as the fallback. */
+:root {
+  --d-bg: #ffffff;
+  --d-fg: #0f172a;
+  --d-muted: #475569;
+  --d-card: #f1f5f9;
+  --d-border: #e2e8f0;
+  --d-primary: #d97706;
+  --d-on-primary: #ffffff;
+  --d-link: #b45309;
+
+  --c-bg: var(--d-bg);
+  --c-fg: var(--d-fg);
+  --c-muted: var(--d-muted);
+  --c-card: var(--d-card);
+  --c-border: var(--d-border);
+  --c-primary: var(--d-primary);
+  --c-on-primary: var(--d-on-primary);
+  --c-link: var(--d-link);
+  --c-ok: #047857;
+  --c-ok-soft: color-mix(in srgb, #047857 14%, transparent);
+  --c-bad: #b91c1c;
+  --c-bad-soft: color-mix(in srgb, #b91c1c 14%, transparent);
+  --c-warn-soft: color-mix(in srgb, #d97706 16%, transparent);
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --d-bg: #0f172a;
+    --d-fg: #f8fafc;
+    --d-muted: #94a3b8;
+    --d-card: #1b2232;
+    --d-border: #2c3a52;
+    --d-primary: #f59e0b;
+    --d-on-primary: #0f172a;
+    --d-link: #fbbf24;
+    --c-ok: #34d399;
+    --c-bad: #f87171;
+  }
+}
+
+.tg {
+  --c-bg: var(--tg-theme-bg-color, var(--d-bg));
+  --c-fg: var(--tg-theme-text-color, var(--d-fg));
+  --c-muted: var(--tg-theme-hint-color, var(--d-muted));
+  --c-card: var(--tg-theme-secondary-bg-color, var(--d-card));
+  --c-border: color-mix(in srgb, var(--tg-theme-hint-color, var(--d-muted)) 28%, transparent);
+  --c-primary: var(--tg-theme-button-color, var(--d-primary));
+  --c-on-primary: var(--tg-theme-button-text-color, var(--d-on-primary));
+  --c-link: var(--tg-theme-link-color, var(--d-link));
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-card: var(--c-card);
+  --color-line: var(--c-border);
+  --color-primary: var(--c-primary);
+  --color-on-primary: var(--c-on-primary);
+  --color-link: var(--c-link);
+  --color-ok: var(--c-ok);
+  --color-ok-soft: var(--c-ok-soft);
+  --color-bad: var(--c-bad);
+  --color-bad-soft: var(--c-bad-soft);
+  --color-warn-soft: var(--c-warn-soft);
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+html,
+body {
+  background: var(--c-bg);
+  color: var(--c-fg);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
