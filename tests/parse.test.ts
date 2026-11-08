@@ -70,3 +70,13 @@ describe("parseSpend", () => {
   );
   it("refuses more decimals than USDC has", () => expect(parseSpend("/spend 1.0000001 USDC @huc").ok).toBe(false));
 });
+
+describe("accountName length budget", () => {
+  it("fits within a smaller budget so <name>.<sponsor> stays at most 64 characters", () => {
+    expect(accountName({ username: "a_really_long_telegram_handle_x", id: 1 }, 23).length).toBeLessThanOrEqual(23);
+    const n = accountName({ first_name: "Maximilian Alexander Johnson", id: 98761234 }, 23);
+    expect(n.length).toBeLessThanOrEqual(23);
+    expect(n).toMatch(/^(([a-z\d]+[-_])*[a-z\d]+)$/);
+    expect(n.endsWith("-1234")).toBe(true);
+  });
+});

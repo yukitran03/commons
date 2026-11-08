@@ -12,7 +12,7 @@ const steps = [
 
 const facts = [
   { title: "No single holder", body: "The money sits in a Sputnik DAO, the same contract Trezu runs on. Not in a teammate's wallet." },
-  { title: "The bot cannot steal", body: "Its DAO role is proposer only. If our server were taken over, the attacker could draft payments and nothing else." },
+  { title: "The bot cannot pay itself", body: "Its DAO role is proposer only. Whoever got hold of the bot's key could draft payments, and the contract would refuse everything else." },
   { title: "Anyone can check", body: "The ledger reads the rules, votes and payments straight from the chain. So does npm run verify." },
 ];
 

@@ -203,3 +203,103 @@ describe("other commands", () => {
     expect(w.tg.texts().at(-1)).toMatch(/group/i);
   });
 });
+
+describe("review fixes", () => {
+  it("only members of the Telegram group can join", async () => {
+    await setup();
+    w.tg.outsiders.add(people.eve.id);
+    await expect(joinPot(w.deps, { ref, tgUser: people.eve, publicKey: w.publicKey() })).rejects.toThrow(/members of the Telegram group/);
+    expect(await w.chain.accountExists("eve.sponsor.testnet")).toBe(false);
+    expect(await memberByTg(w.db, CHAT, people.eve.id)).toBeNull();
+  });
+
+  it("concurrent joins by the same person create one account and agree on it", async () => {
+    await setup();
+    const [a, b] = await Promise.all([
+      joinPot(w.deps, { ref, tgUser: people.alice, publicKey: w.publicKey() }),
+      joinPot(w.deps, { ref, tgUser: people.alice, publicKey: w.publicKey() }),
+    ]);
+    expect(a.accountId).toBe(b.accountId);
+    expect([a.existing, b.existing].filter(Boolean)).toHaveLength(1);
+    expect(await w.chain.accountExists("alice-0101.sponsor.testnet")).toBe(false);
+    expect(await w.chain.balance("sponsor.testnet")).toBe(100n * NEAR - 5n * 10n ** 23n);
+  });
+
+  it("someone who joins while the treasury is being created is not left out", async () => {
+    await setup();
+    await joinFounders();
+    const original = w.chain.createDao.bind(w.chain);
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    w.chain.createDao = async (...args: Parameters<typeof original>) => {
+      await gate;
+      return original(...args);
+    };
+    const creating = createTreasury(w.deps, CHAT, people.alice.id);
+    await new Promise((r) => setTimeout(r, 20));
+    const joining = joinPot(w.deps, { ref, tgUser: people.carol, publicKey: w.publicKey() });
+    await new Promise((r) => setTimeout(r, 20));
+    release();
+    const { daoId } = await creating;
+    await joining;
+    const policy = await w.chain.getPolicy(daoId);
+    const carol = await memberByTg(w.db, CHAT, people.carol.id);
+    const onCouncil = councilOf(policy).includes(carol!.account_id);
+    const open = (await w.chain.getProposals(daoId)).filter(
+      (p) => p.status === "InProgress" && "AddMemberToRole" in p.kind && p.kind.AddMemberToRole.member_id === carol!.account_id,
+    );
+    expect(onCouncil || (carol!.role === "pending" && open.length === 1)).toBe(true);
+  });
+
+  it("a late joiner whose council proposal failed gets one filed on retry", async () => {
+    const daoId = await treasury();
+    const original = w.chain.addProposal.bind(w.chain);
+    let fail = true;
+    w.chain.addProposal = async (...args: Parameters<typeof original>) => {
+      if (fail) {
+        fail = false;
+        throw new Error("rpc hiccup");
+      }
+      return original(...args);
+    };
+    const key = w.publicKey();
+    await expect(joinPot(w.deps, { ref, tgUser: people.carol, publicKey: key })).rejects.toThrow("rpc hiccup");
+    const r = await joinPot(w.deps, { ref, tgUser: people.carol, publicKey: key });
+    expect(r.proposalId).toBeDefined();
+    const open = (await w.chain.getProposals(daoId)).filter((p) => "AddMemberToRole" in p.kind && p.status === "InProgress");
+    expect(open).toHaveLength(1);
+  });
+
+  it("a deleted vote card does not stop the result being announced", async () => {
+    const daoId = await treasury();
+    const r = await joinPot(w.deps, { ref, tgUser: people.carol, publicKey: w.publicKey() });
+    const kind = (await w.chain.getProposal(daoId, r.proposalId!))!.kind;
+    await w.chain.act(w.chain.signer("alice.sponsor.testnet"), daoId, r.proposalId!, "VoteApprove", kind);
+    await w.chain.act(w.chain.signer("bob.sponsor.testnet"), daoId, r.proposalId!, "VoteApprove", kind);
+    w.tg.failEdits.on = true;
+    await refreshProposal(w.deps, daoId, r.proposalId!);
+    expect((await memberByTg(w.db, CHAT, people.carol.id))?.role).toBe("council");
+    expect(w.tg.texts().at(-1)).toMatch(/now on the council/);
+  });
+
+  it("the chain decides who may ask for money, and /commons repairs stale roles", async () => {
+    const daoId = await treasury();
+    const { setRole } = await import("../lib/db.ts");
+    await setRole(w.db, CHAT, people.bob.id, "pending"); // stale record, bob is on the council on chain
+    await handleUpdate(w.deps, w.msg(people.bob, "/spend 0.1 NEAR @alice taxi"));
+    expect(await w.chain.getProposals(daoId)).toHaveLength(1);
+    await handleUpdate(w.deps, w.msg(people.bob, "/commons"));
+    expect((await memberByTg(w.db, CHAT, people.bob.id))?.role).toBe("council");
+  });
+
+  it("keeps <name>.<sponsor> within 64 characters for a long sponsor id", async () => {
+    w = await world("commons-sponsor-mw7abcdefgh.testnet");
+    await setup();
+    const a = await joinPot(w.deps, { ref, tgUser: { id: 5, username: "a_really_long_telegram_handle_x" }, publicKey: w.publicKey() });
+    const b = await joinPot(w.deps, { ref, tgUser: { id: 98761234, first_name: "Maximilian Alexander Johnson" }, publicKey: w.publicKey() });
+    for (const id of [a.accountId, b.accountId]) {
+      expect(id.length).toBeLessThanOrEqual(64);
+      expect(await w.chain.accountExists(id)).toBe(true);
+    }
+  });
+});

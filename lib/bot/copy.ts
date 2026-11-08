@@ -93,6 +93,7 @@ export const copy = {
     noAccount: (id: string, network: string) => `<code>${esc(id)}</code> does not exist on NEAR ${network}.`,
     tooMuch: (holds: string, asked: string) => `The pot holds ${holds}, so it cannot pay ${asked}.`,
     badKey: "That public key is not a valid NEAR ed25519 key.",
+    notInGroup: "Only members of the Telegram group can join this pot.",
     unknownPot: "This link does not belong to a Commons pot.",
     generic: "Something went wrong on my side. Try again in a minute.",
   },

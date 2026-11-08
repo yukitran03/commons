@@ -14,6 +14,8 @@ export function recordingTg(print: (line: string) => void): Tg & { sent: string[
         print(`   ${method === "sendMessage" ? "bot says" : "bot edits"}: ${text.split("\n").join("\n             ")}${buttons ? `\n             ${buttons}` : ""}`);
         return { message_id: ++id };
       }
+      // Everyone in the demo story is a member of the demo group.
+      if (method === "getChatMember") return { status: "member", user: { id: body.user_id } };
       return true;
     },
   };

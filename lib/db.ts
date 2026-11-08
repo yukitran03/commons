@@ -150,6 +150,27 @@ export async function addMember(
   );
 }
 
+/**
+ * Claims the (chat, user) seat before any account exists on chain. The primary key makes this the lock: of two
+ * concurrent joins (double tap, two serverless instances) exactly one gets the row back, the other gets null.
+ */
+export async function claimMember(
+  db: Db,
+  m: { chatId: number; tgUserId: number; tgUsername: string | null | undefined; display: string; accountId: string; publicKey: string; role: Role },
+): Promise<MemberRow | null> {
+  const rows = await db.q(
+    `insert into members (chat_id, tg_user_id, tg_username, display, account_id, public_key, role)
+     values ($1, $2, $3, $4, $5, $6, $7) on conflict do nothing returning *`,
+    [m.chatId, m.tgUserId, m.tgUsername ?? null, m.display, m.accountId, m.publicKey, m.role],
+  );
+  return mem(rows[0]);
+}
+
+/** Releases a claim whose account could not be created, so the person can try again. */
+export async function deleteMember(db: Db, chatId: number, tgUserId: number) {
+  await db.q(`delete from members where chat_id = $1 and tg_user_id = $2`, [chatId, tgUserId]);
+}
+
 export async function memberByTg(db: Db, chatId: number, tgUserId: number) {
   return mem((await db.q(`select * from members where chat_id = $1 and tg_user_id = $2`, [chatId, tgUserId]))[0]);
 }

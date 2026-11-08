@@ -147,3 +147,11 @@ PASS  #0 paid 0.1 NEAR to bob_cm.commons-spike-mw75h7o0.testnet
       approved by alice_cm.commons-spike-mw75h7o0.testnet, bob_cm.commons-spike-mw75h7o0.testnet
 
 All checks passed.
+
+Failed transactions that show the bot's limits (looked up on nearblocks, 2026-11-08):
+- bot act_proposal refused (ERR_PERMISSION_DENIED) on cm-mw75i7gq.sputnikv2.testnet
+  https://testnet.nearblocks.io/txns/6LrRnXMJdzNz6t4bjGqPVCMX7KkqJtMwt363w3jsQ8AS
+- bot ChangePolicy proposal refused on cm-mw75i7gq.sputnikv2.testnet
+  https://testnet.nearblocks.io/txns/EB2k3Snhmq8tEWsNw16xNvJc1Mi24p9tPRjDNL2GS2Eu
+- bot ChangePolicy proposal refused on testnet-demo-74ohgb.sputnikv2.testnet (step 10 of this run)
+  https://testnet.nearblocks.io/txns/Dc9StgdQgRb2Ne1ES1hxVM68S7gGAFvdcnRGddhAbP7P

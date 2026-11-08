@@ -3,6 +3,9 @@
 import { DAO_DEPOSIT, MEMBER_FUNDING, kindName, type Chain, type Proposal, type ProposalKind, type Signer, type Vote } from "./chain.ts";
 import { canAct, councilOf, votesNeeded, type Policy } from "./policy.ts";
 
+/** NEAR's account id rule (the real chain also enforces a 64-character limit). */
+const ACCOUNT_ID = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
+
 interface Dao {
   policy: Policy;
   proposals: Proposal[];
@@ -55,6 +58,7 @@ export class FakeChain implements Chain {
 
   async createMemberAccount(sponsor: Signer, name: string, _publicKey: string) {
     const accountId = `${name}.${sponsor.accountId}`;
+    if (accountId.length > 64 || !ACCOUNT_ID.test(accountId)) throw new Error(`invalid account id ${accountId}`);
     if (this.balances.has(accountId)) throw new Error("ERR_ACCOUNT_EXISTS");
     this.spend(sponsor.accountId, MEMBER_FUNDING);
     this.balances.set(accountId, MEMBER_FUNDING);

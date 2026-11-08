@@ -11,14 +11,20 @@ export interface TgCall {
   body: any;
 }
 
-export function fakeTg(): Tg & { calls: TgCall[]; sent: () => TgCall[]; texts: () => string[] } {
+export function fakeTg(): Tg & { calls: TgCall[]; sent: () => TgCall[]; texts: () => string[]; outsiders: Set<number>; failEdits: { on: boolean } } {
   const calls: TgCall[] = [];
+  const outsiders = new Set<number>();
+  const failEdits = { on: false };
   let id = 100;
   return {
     calls,
+    outsiders,
+    failEdits,
     async call(method, body) {
       calls.push({ method, body });
       if (method === "sendMessage") return { message_id: ++id, chat: { id: body.chat_id } };
+      if (method === "getChatMember") return { status: outsiders.has(Number(body.user_id)) ? "left" : "member", user: { id: body.user_id } };
+      if (method === "editMessageText" && failEdits.on) throw new Error("telegram editMessageText: Bad Request: message to edit not found");
       return true;
     },
     sent: () => calls.filter((c) => c.method === "sendMessage"),
@@ -35,17 +41,17 @@ export const people = {
 
 export const CHAT = -1001234;
 
-export async function world() {
+export async function world(sponsorId = "sponsor.testnet") {
   const db = await openDb();
   const tg = fakeTg();
   const chain = new FakeChain();
-  chain.fund("sponsor.testnet", 100n * NEAR);
+  chain.fund(sponsorId, 100n * NEAR);
   chain.fund("bot.testnet", 1n * NEAR);
   const deps: Deps = {
     db,
     tg,
     chain,
-    sponsor: chain.signer("sponsor.testnet"),
+    sponsor: chain.signer(sponsorId),
     bot: chain.signer("bot.testnet"),
     cfg: { network: "testnet", botUsername: "commons_near_bot", appShortName: "app", appUrl: "https://commons.test", explorer: "https://testnet.nearblocks.io" },
   };

@@ -5,6 +5,7 @@
 export type Action = "AddProposal" | "VoteApprove" | "VoteReject" | "VoteRemove" | "Finalize";
 export type ProposalKindName = "transfer" | "add_member_to_role" | "change_policy" | (string & {});
 
+/** Member(amount): any account with at least `amount` delegated tokens (Sputnik's token-weighted role). */
 export type RoleKind = "Everyone" | { Group: string[] } | { Member: string };
 
 export interface Role {
@@ -54,7 +55,9 @@ export function buildPolicy(o: { council: string[]; bot: string; bondYocto: stri
 function inRole(role: Role, accountId: string): boolean {
   if (role.kind === "Everyone") return true;
   if ("Group" in role.kind) return role.kind.Group.includes(accountId);
-  if ("Member" in role.kind) return role.kind.Member === accountId;
+  // Sputnik's Member(amount) means "anyone whose delegated token balance is at least amount". Balances are not visible
+  // here, so treat it as open to every account: the safe reading for any check that asks "could X do this?".
+  if ("Member" in role.kind) return true;
   return false;
 }
 
@@ -87,6 +90,7 @@ export function botIsProposerOnly(policy: Policy, bot: string): { ok: boolean; p
   const problems: string[] = [];
   for (const role of policy.roles) {
     if (role.kind === "Everyone") problems.push(`role "${role.name}" is open to Everyone`);
+    else if ("Member" in role.kind) problems.push(`role "${role.name}" is a Member role, open to any account holding ${role.kind.Member} delegated tokens`);
     if (!inRole(role, bot)) continue;
     for (const p of role.permissions) {
       const [kind, action] = p.split(":");

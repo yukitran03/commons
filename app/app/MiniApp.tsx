@@ -2,9 +2,12 @@
 // The Telegram Mini App. Keys are generated and kept on this device; votes and chip-ins are signed here and sent
 // straight to NEAR. The server only ever receives public keys and "please re-read proposal N" requests.
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Account, JsonRpcProvider, KeyPair, KeyPairSigner, actions, teraToGas, type KeyPairString } from "near-api-js";
+import { Account, KeyPair, KeyPairSigner, actions, teraToGas, type KeyPairString } from "near-api-js";
 import { Badge, Card, Icon, Mono, Stat, statusLabel, statusTone } from "@/components/ui.tsx";
 import { loadKey, saveKey, type KeyPlace } from "@/lib/client/keys.ts";
+import { hasKey, pickJoinKey } from "@/lib/client/join.ts";
+import { providerFor } from "@/lib/near/failover.ts";
+import { viewKind } from "@/lib/proposalView.ts";
 import { parsePayload, type Payload } from "@/lib/telegram.ts";
 import { fromUnits, toUnits } from "@/lib/tokens.ts";
 import { SOURCES } from "@/lib/intents.ts";
@@ -16,6 +19,7 @@ type PotInfo = {
   daoId: string | null;
   network: "testnet" | "mainnet";
   rpcUrl: string;
+  rpcUrls?: string[];
   explorer: string;
   rules: { council: string[]; needed: number; holdsYocto: string } | null;
   me: { accountId: string; role: "founder" | "pending" | "council" } | null;
@@ -36,9 +40,13 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return j as T;
 }
 
-async function viewCall<T>(rpcUrl: string, contractId: string, method: string, args: object): Promise<T> {
-  const provider = new JsonRpcProvider({ url: rpcUrl });
-  const r: any = await provider.query({
+const provider = (info: PotInfo) => providerFor(info.rpcUrls?.length ? info.rpcUrls : [info.rpcUrl]);
+
+/** The member's key: saved under their account, or still in the slot an unfinished join left it in. */
+const memberKey = async (info: PotInfo, accountId: string) => (await loadKey(accountId)) ?? (await loadKey(`pending-${info.ref}`));
+
+async function viewCall<T>(info: PotInfo, contractId: string, method: string, args: object): Promise<T> {
+  const r: any = await provider(info).query({
     request_type: "call_function",
     finality: "optimistic",
     account_id: contractId,
@@ -49,7 +57,7 @@ async function viewCall<T>(rpcUrl: string, contractId: string, method: string, a
 }
 
 function account(info: PotInfo, accountId: string, secret: string) {
-  return new Account(accountId, new JsonRpcProvider({ url: info.rpcUrl }), new KeyPairSigner(KeyPair.fromString(secret as KeyPairString)));
+  return new Account(accountId, provider(info), new KeyPairSigner(KeyPair.fromString(secret as KeyPairString)));
 }
 
 function Button({ children, onClick, busy, tone = "primary", disabled }: { children: React.ReactNode; onClick: () => void; busy?: boolean; tone?: "primary" | "ok" | "bad" | "ghost"; disabled?: boolean }) {
@@ -188,7 +196,7 @@ function DemoIdentity({ demo, onPick }: { demo: boolean; onPick: (u: { id: numbe
   );
 }
 
-function KeyBackup({ accountId }: { accountId: string }) {
+function KeyBackup({ info, accountId }: { info: PotInfo; accountId: string }) {
   const [secret, setSecret] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   return (
@@ -212,7 +220,7 @@ function KeyBackup({ accountId }: { accountId: string }) {
         </div>
       ) : (
         <div className="mt-3">
-          <Button tone="ghost" onClick={async () => setSecret((await loadKey(accountId)) ?? "This device does not hold the key for this account.")}>
+          <Button tone="ghost" onClick={async () => setSecret((await memberKey(info, accountId)) ?? "This device does not hold the key for this account.")}>
             Show key
           </Button>
         </div>
@@ -231,11 +239,19 @@ function Join({ info, auth, onDone }: { info: PotInfo; auth: Auth; onDone: () =>
     setBusy(true);
     setErr(null);
     try {
-      const kp = KeyPair.fromRandom("ed25519");
-      const secret = kp.toString();
-      await saveKey(`pending-${info.ref}`, secret); // kept even if the page closes before the server answers
-      const r = await post<{ accountId: string; role: string; txHash: string; existing?: boolean }>("/api/join", { ref: info.ref, publicKey: kp.getPublicKey().toString(), ...auth });
-      const place = r.existing ? "browser" : await saveKey(r.accountId, secret);
+      // Reuse a key from an earlier join that never finished, so a retry cannot overwrite the key an account holds.
+      const { secret, reused } = pickJoinKey(await loadKey(`pending-${info.ref}`), () => KeyPair.fromRandom("ed25519").toString());
+      if (!reused) await saveKey(`pending-${info.ref}`, secret); // kept even if the page closes before the server answers
+      const publicKey = KeyPair.fromString(secret as KeyPairString).getPublicKey().toString();
+      const r = await post<{ accountId: string; role: string; txHash: string; existing?: boolean }>("/api/join", { ref: info.ref, publicKey, ...auth });
+      // Trust the chain, not the server: the new account must hold the key this device created.
+      let holds = false;
+      for (let i = 0; i < 6 && !holds; i++) {
+        holds = await hasKey((q) => provider(info).query(q as any), r.accountId, publicKey);
+        if (!holds) await new Promise((res) => setTimeout(res, 1000));
+      }
+      if (!holds) throw new Error(`${r.accountId} does not hold the key this device created. If you joined from another phone, vote from that phone. Otherwise tell the group before using this account.`);
+      const place = await saveKey(r.accountId, secret);
       setDone({ ...r, place });
       haptic("success");
       onDone();
@@ -259,7 +275,7 @@ function Join({ info, auth, onDone }: { info: PotInfo; auth: Auth; onDone: () =>
             Key stored {done.place === "telegram-secure-storage" ? "in Telegram's secure storage on this phone" : "in this browser"}. <TxLink info={info} hash={done.txHash} />
           </p>
         ) : null}
-        <KeyBackup accountId={info.me.accountId} />
+        <KeyBackup info={info} accountId={info.me.accountId} />
       </Card>
     );
   }
@@ -298,7 +314,7 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
   const load = useCallback(async () => {
     if (!info.daoId) return setP(null);
     try {
-      setP(await viewCall<Proposal>(info.rpcUrl, info.daoId, "get_proposal", { id }));
+      setP(await viewCall<Proposal>(info, info.daoId, "get_proposal", { id }));
     } catch {
       setP(null);
     }
@@ -313,7 +329,7 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
     setBusy(action);
     setErr(null);
     try {
-      const secret = (await loadKey(info.me.accountId)) ?? (await loadKey(`pending-${info.ref}`));
+      const secret = await memberKey(info, info.me.accountId);
       if (!secret) throw new Error(`This device does not hold the key for ${info.me.accountId}. Vote from the phone you joined with.`);
       const r: any = await account(info, info.me.accountId, secret).callFunctionRaw({
         contractId: info.daoId,
@@ -341,29 +357,42 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
   const approvals = Object.entries(p.votes).filter(([a, v]) => v === "Approve" && council.includes(a));
   const rejections = Object.entries(p.votes).filter(([a, v]) => v === "Reject" && council.includes(a));
   const needed = info.rules?.needed ?? 1;
-  const isTransfer = "Transfer" in p.kind;
+  // Everything shown comes from the proposal's kind on chain; the free-text description is labelled as such.
+  const view = viewKind(p.kind as Record<string, unknown>);
   const mine = info.me ? p.votes[info.me.accountId] : undefined;
-  const canVote = info.me?.role === "council" && p.status === "InProgress" && !mine;
+  const onCouncil = !!info.me && council.includes(info.me.accountId);
+  const canVote = onCouncil && p.status === "InProgress" && !mine && view.votable;
 
   return (
     <Card className="space-y-4">
       <div className="flex items-start justify-between gap-2">
-        <div className="text-sm text-muted">{isTransfer ? "Payment" : "New member"} #{p.id}</div>
-        <Badge tone={statusTone(p.status)}>{statusLabel(p.status, isTransfer)}</Badge>
+        <div className="text-sm text-muted">
+          {view.label} #{p.id}
+        </div>
+        <Badge tone={statusTone(p.status)}>{statusLabel(p.status, view.transfer)}</Badge>
       </div>
-      {"Transfer" in p.kind ? (
+      {view.transfer && view.votable ? (
         <div>
-          <div className="text-3xl font-semibold tabular-nums">{p.kind.Transfer.token_id === "" ? near(p.kind.Transfer.amount) : `${fromUnits(p.kind.Transfer.amount, 6)} USDC`}</div>
+          <div className="text-3xl font-semibold tabular-nums">{view.headline}</div>
           <div className="mt-1 text-sm">
-            to <Mono>{p.kind.Transfer.receiver_id}</Mono>
+            to <Mono>{view.target}</Mono>
           </div>
         </div>
-      ) : "AddMemberToRole" in p.kind ? (
-        <div className="text-lg font-semibold">
-          Add <Mono>{p.kind.AddMemberToRole.member_id}</Mono> to the {p.kind.AddMemberToRole.role}
-        </div>
+      ) : (
+        <div className="text-lg font-semibold">{view.headline}</div>
+      )}
+      {view.warning ? (
+        <Notice tone="bad">
+          <span className="flex gap-2">
+            <Icon name="alert" size={16} className="mt-0.5 shrink-0" /> {view.warning}
+          </span>
+        </Notice>
       ) : null}
-      <p className="text-sm text-muted">{p.description}</p>
+      {!view.votable ? <pre className="max-h-48 overflow-auto rounded-lg bg-bg p-2 font-mono text-xs">{JSON.stringify(p.kind, null, 2)}</pre> : null}
+      <p className="text-sm text-muted">
+        <span className="font-medium">Note from the proposer: </span>
+        {p.description}
+      </p>
 
       <div>
         <div className="flex justify-between text-sm">
@@ -392,7 +421,7 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
       ) : null}
       {mine ? <Notice tone="info">You voted {mine === "Approve" ? "to approve" : "to reject"}.</Notice> : null}
       {!info.me && p.status === "InProgress" ? <Notice tone="info">Only council members can vote. Join the pot first.</Notice> : null}
-      {info.me && info.me.role !== "council" && p.status === "InProgress" ? <Notice tone="info">{roleText(info.me.role)}.</Notice> : null}
+      {info.me && !onCouncil && p.status === "InProgress" ? <Notice tone="info">{roleText(info.me.role === "council" ? "pending" : info.me.role)}.</Notice> : null}
 
       {canVote ? (
         <div className="grid grid-cols-2 gap-3">
@@ -452,7 +481,7 @@ function FromNear({ info }: { info: PotInfo }) {
 
   useEffect(() => {
     if (!info.me) return;
-    new JsonRpcProvider({ url: info.rpcUrl })
+    provider(info)
       .query({ request_type: "view_account", finality: "optimistic", account_id: info.me.accountId })
       .then((a: any) => setMine(BigInt(a.amount) - BigInt(a.storage_usage) * 10n ** 19n))
       .catch(() => setMine(null));
@@ -475,7 +504,7 @@ function FromNear({ info }: { info: PotInfo }) {
     setBusy(true);
     setErr(null);
     try {
-      const secret = await loadKey(info.me!.accountId);
+      const secret = await memberKey(info, info.me!.accountId);
       if (!secret) throw new Error(`This device does not hold the key for ${info.me!.accountId}.`);
       const r: any = await account(info, info.me!.accountId, secret).signAndSendTransaction({ receiverId: info.daoId!, actions: [actions.transfer(toUnits(amount, 24))] });
       setTx(r.transaction.hash);

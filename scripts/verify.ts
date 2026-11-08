@@ -1,6 +1,6 @@
 // npm run verify -- [daoId]: checks a live Commons DAO straight from NEAR, trusting nothing from our server.
 //   1. the bot role can only propose transfers and new members (no votes, no finalize, no policy changes),
-//   2. no role is open to Everyone,
+//   2. no role is open to Everyone or to token holders (Member roles),
 //   3. the bot never voted,
 //   4. every paid transfer carries council approvals.
 // Defaults to the DAO recorded in docs/demo-run.log.
@@ -34,9 +34,11 @@ const policy = await chain.getPolicy(dao);
 const proposals = await chain.getProposals(dao);
 const council = councilOf(policy);
 const needed = votesNeeded(policy);
+// Check whoever holds the proposer role, plus the bot this deployment uses (BOT_ACCOUNT_ID), wherever it sits.
 const bots = (() => {
   const r = policy.roles.find((x) => x.name === PROPOSER_ROLE);
-  return r && typeof r.kind === "object" && "Group" in r.kind ? r.kind.Group : [];
+  const inRole = r && typeof r.kind === "object" && "Group" in r.kind ? r.kind.Group : [];
+  return [...new Set([...inRole, ...(process.env.BOT_ACCOUNT_ID ? [process.env.BOT_ACCOUNT_ID] : [])])];
 })();
 
 console.log(`council (${council.length}): ${council.join(", ")}`);
@@ -49,7 +51,7 @@ for (const b of bots) {
   const c = botIsProposerOnly(policy, b);
   row(c.ok, `${b} can only propose transfers and new members`, c.problems.join("; "));
 }
-row(!policy.roles.some((r) => r.kind === "Everyone"), "no role is open to Everyone");
+row(!policy.roles.some((r) => r.kind === "Everyone" || "Member" in (r.kind as object)), "no role is open to Everyone or to token holders (Member)");
 const botVotes = proposals.flatMap((p) => Object.keys(p.votes).filter((a) => bots.includes(a)).map((a) => `#${p.id} by ${a}`));
 row(botVotes.length === 0, "the bot never voted", botVotes.join(", "));
 

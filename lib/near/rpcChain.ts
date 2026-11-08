@@ -1,5 +1,6 @@
 // The real network. Every call here was first exercised by hand on testnet (see docs/demo-run.log).
 import { Account, JsonRpcProvider, KeyPair, KeyPairSigner, actions, getTransactionLastResult, teraToGas, type KeyPairString } from "near-api-js";
+import { failover } from "./failover.ts";
 import { DAO_DEPOSIT, MEMBER_FUNDING, type Chain, type Proposal, type ProposalKind, type Signer, type Vote } from "./chain.ts";
 import type { Policy } from "./policy.ts";
 
@@ -12,33 +13,7 @@ const STORAGE_PRICE_PER_BYTE = 10n ** 19n;
 
 type TxResult = { transaction: { hash: string } };
 
-const TRANSIENT = /429|rate.?limit|too many requests|deprecated|ECONNRESET|ETIMEDOUT|ENOTFOUND|fetch failed|socket hang up|50[234]/i;
-
-/**
- * Wraps several providers as one. Unlike near-api-js FailoverRpcProvider, it moves to the next endpoint only on
- * transport trouble (rate limits, outages), never on answers like "account does not exist", which callers rely on.
- */
-export function failover(providers: JsonRpcProvider[]): JsonRpcProvider {
-  if (providers.length === 1) return providers[0];
-  return new Proxy(providers[0], {
-    get(target, prop, receiver) {
-      const value = Reflect.get(target, prop, receiver);
-      if (typeof value !== "function") return value;
-      return async (...args: unknown[]) => {
-        let last: unknown;
-        for (const p of providers) {
-          try {
-            return await (p as any)[prop](...args);
-          } catch (e) {
-            last = e;
-            if (!TRANSIENT.test(String((e as Error)?.message ?? e))) throw e;
-          }
-        }
-        throw last;
-      };
-    },
-  });
-}
+export { failover };
 
 /** 100 Tgas is plenty for a vote that executes a transfer; NEAR reserves the prepaid amount at a pessimistic price. */
 export const ACT_GAS = teraToGas("100");

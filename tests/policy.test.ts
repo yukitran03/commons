@@ -75,3 +75,18 @@ describe("botIsProposerOnly", () => {
     expect(botIsProposerOnly(wide, BOT).ok).toBe(false);
   });
 });
+
+describe("Member roles (token-weighted, match any account)", () => {
+  it("botIsProposerOnly fails when a Member role can approve", () => {
+    const p = make(["a.testnet", "b.testnet"]);
+    const open: Policy = { ...p, roles: [...p.roles, { name: "holders", kind: { Member: "0" }, permissions: ["*:VoteApprove"], vote_policy: {} }] };
+    const r = botIsProposerOnly(open, BOT);
+    expect(r.ok).toBe(false);
+    expect(r.problems.join(" ")).toMatch(/Member/);
+  });
+  it("canAct treats a Member role as open to any account", () => {
+    const p = make(["a.testnet"]);
+    const open: Policy = { ...p, roles: [...p.roles, { name: "holders", kind: { Member: "0" }, permissions: ["*:VoteApprove"], vote_policy: {} }] };
+    expect(canAct(open, "anyone.testnet", "transfer", "VoteApprove")).toBe(true);
+  });
+});

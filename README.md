@@ -25,7 +25,7 @@ Needs Node 22.6 or newer and npm. Nothing below needs a key, a wallet or a Teleg
    ```
    npm ci
    ```
-2. Run the tests. Expect `Tests  118 passed (118)`:
+2. Run the tests. Expect `Tests  141 passed (141)`:
    ```
    npm test
    ```
@@ -67,11 +67,15 @@ Needs Node 22.6 or newer and npm. Nothing below needs a key, a wallet or a Teleg
 
 | Claim | Code | Test or proof |
 |---|---|---|
-| The bot cannot vote | `PROPOSER_PERMISSIONS` in [`lib/near/policy.ts`](lib/near/policy.ts) | `tests/policy.test.ts`, `npm run demo` step 9; on testnet the bot's `act_proposal` on `cm-mw75i7gq.sputnikv2.testnet` failed with `ERR_PERMISSION_DENIED`; `npm run verify` confirms the bot never voted on `testnet-demo-74ohgb` |
-| The bot cannot change the rules | same | `npm run demo` step 10; testnet run step 10 on `testnet-demo-74ohgb`: refused with `ERR_PERMISSION_DENIED` |
+| The bot cannot vote | `PROPOSER_PERMISSIONS` in [`lib/near/policy.ts`](lib/near/policy.ts) | `tests/policy.test.ts`, `npm run demo` step 9; on testnet the bot's `act_proposal` failed with `ERR_PERMISSION_DENIED` ([tx 6LrRnX…](https://testnet.nearblocks.io/txns/6LrRnXMJdzNz6t4bjGqPVCMX7KkqJtMwt363w3jsQ8AS)); `npm run verify` confirms the bot never voted on `testnet-demo-74ohgb` |
+| The bot cannot change the rules | same | `npm run demo` step 10; on testnet the bot's `ChangePolicy` proposals failed with `ERR_PERMISSION_DENIED` ([tx EB2k3S…](https://testnet.nearblocks.io/txns/EB2k3Snhmq8tEWsNw16xNvJc1Mi24p9tPRjDNL2GS2Eu), [tx Dc9Stg…](https://testnet.nearblocks.io/txns/Dc9StgdQgRb2Ne1ES1hxVM68S7gGAFvdcnRGddhAbP7P)) |
+| The verifier cannot be fooled by open roles | `botIsProposerOnly` flags `Everyone` and token-weighted `Member` roles | `tests/policy.test.ts` "botIsProposerOnly fails when a Member role can approve" |
+| Voters see what the contract will do, not the proposer's text | `viewKind` in [`lib/proposalView.ts`](lib/proposalView.ts); the Mini App offers a vote only on kinds Commons files and shows anything else as raw JSON with a warning | `tests/proposalView.test.ts` |
+| Only people in the Telegram group can join | `getChatMember` check in `joinPot` | `tests/e2e-bot.test.ts` "only members of the Telegram group can join" |
+| A join cannot be doubled or lose its key | the database claims the seat before the account exists; the Mini App reuses an unfinished join's key and checks on chain (`view_access_key`) that the new account holds it | `tests/e2e-bot.test.ts` "concurrent joins by the same person create one account and agree on it", `tests/client.test.ts` |
 | Money moves only with a council majority | `votesNeeded` in [`lib/near/policy.ts`](lib/near/policy.ts), Sputnik's own threshold | `tests/fakeChain.test.ts`; testnet payment #0 of `testnet-demo-74ohgb` approved by alice_cm and bob_cm, checked by `npm run verify` |
 | Member keys never reach the server | `/api/join` takes `publicKey` only | [`app/api/join/route.ts`](app/api/join/route.ts); the server code has no field for a private key |
-| New members are voted in | `joinPot` files `AddMemberToRole` once a DAO exists | `tests/e2e-bot.test.ts` "a late joiner is pending until the council votes them in"; testnet run step 7 |
+| New members are voted in, nobody is left out | `ensureVotedIn` in [`lib/pot.ts`](lib/pot.ts) files exactly one `AddMemberToRole` for anyone not on the council, including someone who joined while the treasury was being created or whose proposal failed; `/commons` repairs stale roles from the chain | `tests/e2e-bot.test.ts` "a late joiner is pending until the council votes them in", "someone who joins while the treasury is being created is not left out", "a late joiner whose council proposal failed gets one filed on retry"; testnet run step 7 |
 | Mini App requests are authenticated | `verifyInitData` (Telegram's HMAC scheme) | `tests/tgauth.test.ts` "rejects forged and stale initData" |
 | Results posted in the group come from the chain | `refreshProposal`, `waitForVote` in [`lib/pot.ts`](lib/pot.ts) | `tests/e2e-bot.test.ts` "vote notify trusts the chain only" |
 | The webhook only accepts Telegram | secret token check in [`app/api/telegram/route.ts`](app/api/telegram/route.ts) | manual: a POST without the header returns 403 |
@@ -104,7 +108,7 @@ Postgres (Neon in production, PGlite locally) only maps Telegram chats and users
 ## Run your own bot
 
 1. Create a bot with [@BotFather](https://t.me/BotFather) (`/newbot`), then register a Mini App for it with `/newapp` and short name `app`, pointing at `https://<your-app>/app`.
-2. `npm run setup:testnet` creates a sponsor account (from the faucet, or reuses `SPONSOR_ACCOUNT_ID`/`SPONSOR_PRIVATE_KEY`) and a bot sub-account, and prints the env lines once. Each new group costs the sponsor about 6.5 NEAR (DAO storage plus member accounts).
+2. `npm run setup:testnet` creates a sponsor account (from the faucet, or reuses `SPONSOR_ACCOUNT_ID`/`SPONSOR_PRIVATE_KEY`) and a bot sub-account, and prints the env lines once. Each new group costs the sponsor 6 NEAR for the DAO plus 0.5 NEAR per member, so at least 7 NEAR.
 3. Create a Neon Postgres database. Put everything from [`.env.example`](.env.example) into the Vercel project (or `.env.local`), with `APP_URL` set to your deployment.
 4. Deploy (`vercel deploy`), then `npm run set-webhook`.
 5. Add the bot to a group and send `/commons`.
@@ -116,7 +120,8 @@ Postgres (Neon in production, PGlite locally) only maps Telegram chats and users
 - **Cost per group.** A Sputnik DAO locks about 5.5 NEAR of storage, paid by the sponsor. A Telegram user can join many groups, and each join costs the sponsor 0.5 NEAR; there is no rate limit beyond one account per user per group yet.
 - **Lost phone.** The key lives on the phone (Telegram SecureStorage on mobile clients with Bot API 9.0+, otherwise the browser's localStorage). The Mini App can show the key for backup. If it is lost, the council can remove the member with a `RemoveMemberFromRole` proposal in any Sputnik UI; the bot does not offer that yet.
 - **The demo log.** [`docs/demo-run.log`](docs/demo-run.log) is a real run with 11 of 12 steps passing. Step 9 failed because the script read a proposal one block too early; the notes at the end of the log explain it, and the fix (`waitForVote`) is in the code. A fresh run was blocked by the faucet's daily limit.
-- **One process lock.** Double taps are serialized inside one server process and the DAO name is deterministic per group, so a second create fails on chain rather than creating a second DAO.
+- **Trusting the web app.** The bot key alone cannot move money. But the same server also serves the Mini App's code, so someone who took over the whole deployment could ship code that reads keys from the phone the next time a member opens it. The Mini App does check on chain that each new account holds the key the phone created, which stops a server from slipping in its own key at join time. Signing with an existing wallet (see Not implemented) would remove this trust.
+- **Double taps.** Joins are locked by the database (one seat per person per group). Treasury creation is locked per server process, and the DAO name is fixed per group, so a second create from another process fails on chain instead of making a second DAO.
 
 ## Not implemented
 
@@ -124,6 +129,8 @@ Postgres (Neon in production, PGlite locally) only maps Telegram chats and users
 - Storage registration for USDC on mainnet DAOs before the first cross-chain chip-in.
 - Signing in with an existing NEAR wallet (NEAR Connect) instead of a key created in the Mini App.
 - Gasless votes through meta-transactions; members get 0.5 NEAR for gas instead.
+- Reminders for members who have not voted yet, and a CSV export of the ledger.
+- Rate limits on joins across many groups.
 - An AI assistant. Commons has no LLM anywhere in the money path.
 
 ## Disclosure

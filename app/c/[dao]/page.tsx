@@ -6,8 +6,8 @@ import { Badge, Card, Icon, Mono, Stat, statusLabel, statusTone } from "@/compon
 import { accountUrl, nearConfig } from "@/lib/near/config.ts";
 import { PROPOSER_ROLE, botIsProposerOnly, councilOf, votesNeeded, type Policy } from "@/lib/near/policy.ts";
 import type { Proposal } from "@/lib/near/chain.ts";
-import { fmtNear, tokenOf } from "@/lib/pot.ts";
-import { fromUnits } from "@/lib/tokens.ts";
+import { fmtNear } from "@/lib/pot.ts";
+import { viewKind } from "@/lib/proposalView.ts";
 import { readChain } from "@/lib/server.ts";
 
 export const dynamic = "force-dynamic";
@@ -19,18 +19,18 @@ export async function generateMetadata({ params }: { params: Promise<{ dao: stri
   return { title: `Ledger · ${dao}`, description: `Rules, votes and payments of ${dao}, read from NEAR.` };
 }
 
-function proposerOf(policy: Policy): string[] {
+/** Accounts checked as "the bot": whoever holds the proposer role, plus this deployment's configured bot account. */
+function botsOf(policy: Policy): string[] {
   const r = policy.roles.find((x) => x.name === PROPOSER_ROLE);
-  return r && typeof r.kind === "object" && "Group" in r.kind ? r.kind.Group : [];
+  const inRole = r && typeof r.kind === "object" && "Group" in r.kind ? r.kind.Group : [];
+  return [...new Set([...inRole, ...(process.env.BOT_ACCOUNT_ID ? [process.env.BOT_ACCOUNT_ID] : [])])];
 }
 
 function describe(p: Proposal): { title: string; detail: string | null; transfer: boolean } {
-  if ("Transfer" in p.kind) {
-    const t = tokenOf(p.kind.Transfer.token_id);
-    return { title: `${fromUnits(p.kind.Transfer.amount, t.decimals, 6)} ${t.symbol} to`, detail: p.kind.Transfer.receiver_id, transfer: true };
-  }
-  if ("AddMemberToRole" in p.kind) return { title: `Add to ${p.kind.AddMemberToRole.role}:`, detail: p.kind.AddMemberToRole.member_id, transfer: false };
-  return { title: "Change policy", detail: null, transfer: false };
+  const v = viewKind(p.kind as Record<string, unknown>);
+  if (v.transfer && v.votable) return { title: `${v.headline} to`, detail: v.target, transfer: true };
+  if (v.label === "New member") return { title: v.headline, detail: null, transfer: false };
+  return { title: `${v.label}: ${v.headline}`, detail: v.target, transfer: v.transfer };
 }
 
 const when = (ns: string) => new Date(Number(BigInt(ns) / 1_000_000n)).toISOString().replace("T", " ").slice(0, 16) + " UTC";
@@ -51,7 +51,7 @@ export default async function Ledger({ params }: { params: Promise<{ dao: string
   const [proposals, holds] = await Promise.all([chain.getProposals(dao), chain.balance(dao)]);
   const council = councilOf(policy);
   const needed = votesNeeded(policy);
-  const bots = proposerOf(policy);
+  const bots = botsOf(policy);
   const checks = bots.map((b) => ({ bot: b, ...botIsProposerOnly(policy, b) }));
   const paid = proposals.filter((p) => p.status === "Approved" && "Transfer" in p.kind).length;
   const readAt = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
