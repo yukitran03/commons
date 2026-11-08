@@ -1,0 +1,43 @@
+{
+  "name": "commons",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A Telegram group treasury on NEAR: the money sits in a Sputnik DAO, every member holds their own key, and the bot can only propose.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "demo": "node --experimental-strip-types --no-warnings scripts/demo.ts",
+    "demo:testnet": "node --experimental-strip-types --no-warnings scripts/demo-testnet.ts",
+    "verify": "node --experimental-strip-types --no-warnings scripts/verify.ts",
+    "quote": "node --experimental-strip-types --no-warnings scripts/quote.ts",
+    "setup:testnet": "node --experimental-strip-types --no-warnings scripts/setup-testnet.ts",
+    "set-webhook": "node --experimental-strip-types --no-warnings --env-file-if-exists=.env.local scripts/set-webhook.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "near-api-js": "^7.4.0",
+    "next": "^16.4.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.12"
+  }
+}
