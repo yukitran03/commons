@@ -37,7 +37,7 @@ const expectStatus = async (res: Promise<Response>, status: number, contains?: s
 };
 
 console.log(`Smoke test of ${base}\n`);
-await check("landing page renders", () => expectStatus(get("/"), 200, "Group money nobody has to hold"));
+await check("landing page renders", () => expectStatus(get("/"), 200, "Why the money is safe"));
 await check("Mini App page renders", () => expectStatus(get("/app"), 200));
 if (dao) await check(`public ledger reads ${dao} from the chain and shows the bot is proposer only`, () => expectStatus(get(`/c/${dao}`), 200, "Bot cannot vote or move money"));
 await check("unknown DAO gives 404", () => expectStatus(get("/c/does-not-exist-zz.testnet"), 404));
