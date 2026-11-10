@@ -19,7 +19,8 @@
     "verify": "node --experimental-strip-types --no-warnings scripts/verify.ts",
     "quote": "node --experimental-strip-types --no-warnings scripts/quote.ts",
     "setup:testnet": "node --experimental-strip-types --no-warnings scripts/setup-testnet.ts",
-    "set-webhook": "node --experimental-strip-types --no-warnings --env-file-if-exists=.env.local scripts/set-webhook.ts"
+    "set-webhook": "node --experimental-strip-types --no-warnings --env-file-if-exists=.env.local scripts/set-webhook.ts",
+    "smoke": "node --experimental-strip-types --no-warnings scripts/smoke.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",

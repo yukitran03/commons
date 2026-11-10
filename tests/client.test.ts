@@ -24,3 +24,17 @@ describe("hasKey", () => {
     await expect(hasKey(async () => Promise.reject(new Error("fetch failed")), "a.testnet", "ed25519:PUB")).rejects.toThrow("fetch failed");
   });
 });
+
+describe("waitFor", () => {
+  it("waits for Telegram's script to appear instead of deciding too early", async () => {
+    const { waitFor } = await import("../lib/client/join.ts");
+    let calls = 0;
+    const got = await waitFor(() => (++calls >= 3 ? { initData: "x" } : undefined), { timeoutMs: 500, intervalMs: 1 });
+    expect(got).toEqual({ initData: "x" });
+    expect(calls).toBe(3);
+  });
+  it("gives up after the timeout and returns undefined (a normal browser)", async () => {
+    const { waitFor } = await import("../lib/client/join.ts");
+    expect(await waitFor(() => undefined, { timeoutMs: 20, intervalMs: 5 })).toBeUndefined();
+  });
+});

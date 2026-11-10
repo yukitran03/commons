@@ -4,6 +4,8 @@
 
 Built for NEAR Hackathon 2026. Tracks: **Social Money**, **Real-World Money**. Runs on NEAR testnet.
 
+**Live:** https://commons-near.vercel.app · **Telegram bot:** [@commons_near_bot](https://t.me/commons_near_bot) · **Public ledger of the demo DAO:** https://commons-near.vercel.app/c/testnet-demo-74ohgb.sputnikv2.testnet
+
 ![Landing page and public ledger at phone width](docs/img/landing-and-ledger.png)
 
 ## The problem
@@ -25,7 +27,7 @@ Needs Node 22.6 or newer and npm. Nothing below needs a key, a wallet or a Teleg
    ```
    npm ci
    ```
-2. Run the tests. Expect `Tests  141 passed (141)`:
+2. Run the tests. Expect `Tests  145 passed (145)`:
    ```
    npm test
    ```
@@ -49,7 +51,12 @@ Needs Node 22.6 or newer and npm. Nothing below needs a key, a wallet or a Teleg
    npm run quote -- arb-usdc 10
    ```
    On 2026-11-08 the unauthenticated 1Click endpoint answered every quote with HTTP 500 after 25 seconds (see Honest limits). The command then prints `No quote: ...` and exits 1; that is the 1Click service, not this repo.
-7. Optional: the web app. `npm run build && npm start`, then open `http://localhost:3000/c/testnet-demo-74ohgb.sputnikv2.testnet` for the public ledger.
+7. Optional: check the live deployment from the outside (no secrets). Expect 11 `PASS` lines and `All checks passed.`:
+   ```
+   npm run smoke
+   ```
+   It loads the landing page, the Mini App and the public ledger (which must show "Bot cannot vote or move money" read from the chain), and checks that the webhook and the Mini App endpoints refuse requests without Telegram's secret or signature.
+8. Optional: the web app locally. `npm run build && npm start`, then open `http://localhost:3000/c/testnet-demo-74ohgb.sputnikv2.testnet` for the public ledger.
 
 ## How NEAR is used
 

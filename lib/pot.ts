@@ -23,7 +23,7 @@ import { copy, UserError, who } from "./bot/copy.ts";
 import { parseSpend } from "./bot/parse.ts";
 import { accountName, daoName } from "./near/names.ts";
 import { buildPolicy, councilOf, votesNeeded, type Policy } from "./near/policy.ts";
-import { kindName, type Chain, type Proposal, type ProposalKind, type Signer } from "./near/chain.ts";
+import { DAO_DEPOSIT, MEMBER_FUNDING, NEAR, kindName, type Chain, type Proposal, type ProposalKind, type Signer } from "./near/chain.ts";
 import { accountUrl, type Network } from "./near/config.ts";
 import { TOKENS, fromUnits, toUnits, type TokenSymbol } from "./tokens.ts";
 import { chipPayload, joinPayload, miniAppLink, send, edit, votePayload, type Kb, type Tg } from "./telegram.ts";
@@ -147,6 +147,10 @@ export async function joinPot(d: Deps, o: { ref: string; tgUser: TgUser; publicK
   const pot = await potByRef(d.db, o.ref);
   if (!pot) throw new UserError(copy.err.unknownPot);
   if (!o.skipGroupCheck) await assertInGroup(d, pot.chat_id, o.tgUser.id);
+  // A clear message beats a failed transaction when the sponsor cannot pay for one more account (plus gas).
+  if ((await d.chain.balance(d.sponsor.accountId)) < MEMBER_FUNDING + NEAR / 100n && !(await memberByTg(d.db, pot.chat_id, o.tgUser.id))) {
+    throw new UserError(copy.err.sponsorLowJoin);
+  }
 
   const existing = await memberByTg(d.db, pot.chat_id, o.tgUser.id);
   if (existing) return resume(d, existing);
@@ -198,6 +202,7 @@ export async function createTreasury(d: Deps, chatId: number, requestedBy: numbe
     for (const m of ms) if (m.role === "founder" && (await d.chain.accountExists(m.account_id))) founders.push(m);
     if (!founders.some((m) => m.tg_user_id === requestedBy)) throw new UserError(copy.err.notJoined);
     if (founders.length < 2) throw new UserError(copy.err.needTwo);
+    if ((await d.chain.balance(d.sponsor.accountId)) < DAO_DEPOSIT + NEAR / 10n) throw new UserError(copy.err.sponsorLowDao);
 
     const policy = buildPolicy({ council: founders.map((m) => m.account_id), bot: d.bot.accountId, bondYocto: BOND_YOCTO });
     const { daoId, txHash } = await d.chain.createDao(d.sponsor, daoName(pot.title, pot.ref), `Treasury of the Telegram group "${pot.title}", run with Commons.`, policy);

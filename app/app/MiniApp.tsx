@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Account, KeyPair, KeyPairSigner, actions, teraToGas, type KeyPairString } from "near-api-js";
 import { Badge, Card, Icon, Mono, Stat, statusLabel, statusTone } from "@/components/ui.tsx";
 import { loadKey, saveKey, type KeyPlace } from "@/lib/client/keys.ts";
-import { hasKey, pickJoinKey } from "@/lib/client/join.ts";
+import { hasKey, pickJoinKey, waitFor } from "@/lib/client/join.ts";
 import { providerFor } from "@/lib/near/failover.ts";
 import { viewKind } from "@/lib/proposalView.ts";
 import { parsePayload, type Payload } from "@/lib/telegram.ts";
@@ -106,17 +106,25 @@ export default function MiniApp() {
   const [inTelegram, setInTelegram] = useState(false);
 
   useEffect(() => {
-    const app = tgApp();
-    const start = app?.initDataUnsafe?.start_param || new URLSearchParams(location.search).get("p") || "";
-    if (app?.initData) {
-      setInTelegram(true);
-      app.ready();
-      app.expand?.();
-      setAuth({ initData: app.initData });
-    }
-    const p = parsePayload(start);
-    if (!p) setError("This link is not a Commons link. Open it from the group's message.");
-    setPayload(p);
+    let cancelled = false;
+    (async () => {
+      // telegram-web-app.js may still be loading; only a page with no initData after a short wait is outside Telegram.
+      const fromUrl = new URLSearchParams(location.search).get("p");
+      const app = await waitFor(() => (tgApp()?.initData ? tgApp() : undefined), { timeoutMs: fromUrl ? 600 : 3000 });
+      if (cancelled) return;
+      if (app) {
+        setInTelegram(true);
+        app.ready();
+        app.expand?.();
+        setAuth({ initData: app.initData });
+      }
+      const p = parsePayload(app?.initDataUnsafe?.start_param || fromUrl || "");
+      if (!p) setError("This link is not a Commons link. Open it from the group's message.");
+      setPayload(p);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const refresh = useCallback(async () => {

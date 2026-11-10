@@ -303,3 +303,24 @@ describe("review fixes", () => {
     }
   });
 });
+
+describe("sponsor running low", () => {
+  it("says clearly that treasury creation is paused when the sponsor cannot pay for a DAO", async () => {
+    await setup();
+    await joinFounders();
+    const left = await w.chain.balance("sponsor.testnet");
+    await w.chain.transfer(w.chain.signer("sponsor.testnet"), "elsewhere.testnet", left - 3n * NEAR); // leave 3 NEAR
+    await handleUpdate(w.deps, w.tap(people.alice, "create"));
+    expect((await potByChat(w.db, CHAT))?.dao_id).toBeNull();
+    const answer = w.tg.calls.filter((c) => c.method === "answerCallbackQuery").at(-1);
+    expect(answer?.body.text).toMatch(/testnet NEAR/);
+  });
+
+  it("says clearly that joining is paused when the sponsor cannot fund an account", async () => {
+    await setup();
+    const left = await w.chain.balance("sponsor.testnet");
+    await w.chain.transfer(w.chain.signer("sponsor.testnet"), "elsewhere.testnet", left - 10n ** 23n); // leave 0.1 NEAR
+    await expect(joinPot(w.deps, { ref, tgUser: people.alice, publicKey: w.publicKey() })).rejects.toThrow(/testnet NEAR/);
+    expect(await memberByTg(w.db, CHAT, people.alice.id)).toBeNull();
+  });
+});

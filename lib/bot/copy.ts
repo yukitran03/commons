@@ -94,6 +94,8 @@ export const copy = {
     tooMuch: (holds: string, asked: string) => `The pot holds ${holds}, so it cannot pay ${asked}.`,
     badKey: "That public key is not a valid NEAR ed25519 key.",
     notInGroup: "Only members of the Telegram group can join this pot.",
+    sponsorLowDao: "Creating treasuries is paused: the Commons sponsor account needs more testnet NEAR to pay for a new DAO. Try again later.",
+    sponsorLowJoin: "Joining is paused: the Commons sponsor account needs more testnet NEAR to open new member accounts. Try again later.",
     unknownPot: "This link does not belong to a Commons pot.",
     generic: "Something went wrong on my side. Try again in a minute.",
   },
