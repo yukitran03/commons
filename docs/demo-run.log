@@ -1,9 +1,9 @@
-Commons testnet demo, 2026-11-08T02:22:05.382Z
+Commons testnet demo, 2026-11-10T08:34:36.524Z
 RPC https://test.rpc.fastnear.com, DAO factory sputnikv2.testnet
 
 Using sponsor commons-spike-mw75h7o0.testnet from the environment.
 sponsor commons-spike-mw75h7o0.testnet
-bot     bot-mw77iflv.commons-spike-mw75h7o0.testnet
+bot     bot-mwafp76a.commons-spike-mw75h7o0.testnet
 
 1. Someone sends /commons in the Telegram group
    bot says: Commons for Testnet Demo
@@ -15,42 +15,42 @@ bot     bot-mw77iflv.commons-spike-mw75h7o0.testnet
              
              Nobody has joined yet.
              [Join]
-   PASS  pot ref 74ohgbleij
+   PASS  pot ref vp4rgkdewx
 
 2. Alice and Bob tap Join: each gets a named NEAR account, the key stays on their own device
-   bot says: @alice_cm joined as alice_cm.commons-spike-mw75h7o0.testnet. 1 founder so far.
+   bot says: @alice_cm joined as alice_cm-7001.commons-spike-mw75h7o0.testnet. 1 founder so far.
              [Join]
-   bot says: @bob_cm joined as bob_cm.commons-spike-mw75h7o0.testnet. 2 founders so far. A founder can now create the treasury.
+   bot says: @bob_cm joined as bob_cm-7002.commons-spike-mw75h7o0.testnet. 2 founders so far. A founder can now create the treasury.
              [Join] [Create treasury (2 founders)]
-   PASS  alice_cm.commons-spike-mw75h7o0.testnet, bob_cm.commons-spike-mw75h7o0.testnet
+   PASS  alice_cm-7001.commons-spike-mw75h7o0.testnet, bob_cm-7002.commons-spike-mw75h7o0.testnet
 
 3. Alice taps Create treasury: a Sputnik DAO with Alice and Bob as council, the bot as proposer only
    bot says: Treasury created
-             testnet-demo-74ohgb.sputnikv2.testnet
+             testnet-demo-vp4rgk.sputnikv2.testnet
              Council: @alice_cm and @bob_cm
              Payments need 2 of 2 approvals.
              My role in this DAO is proposer only: I can draft payments, I cannot vote or move money. The ledger shows the rules as the contract stores them.
              [Chip in] [Ledger]
-   PASS  testnet-demo-74ohgb.sputnikv2.testnet
+   PASS  testnet-demo-vp4rgk.sputnikv2.testnet
 
 4. Alice chips in 0.2 NEAR from her own account
-   PASS  pot holds 0.7946 NEAR
+   PASS  pot holds 0.7945 NEAR
 
 5. Alice asks in the chat: /spend 0.1 NEAR @bob_cm pizza for demo night
    bot says: Payment #0
              0.1 NEAR to @bob_cm
-             bob_cm.commons-spike-mw75h7o0.testnet
+             bob_cm-7002.commons-spike-mw75h7o0.testnet
              For: pizza for demo night
              Asked by @alice_cm
              
              Approvals: 0 of 2
              [Review and vote] [Ledger]
-   PASS  proposal #0 filed by bot-mw77iflv.commons-spike-mw75h7o0.testnet
+   PASS  proposal #0 filed by bot-mwafp76a.commons-spike-mw75h7o0.testnet
 
 6. Alice and Bob approve on their phones; the DAO pays Bob
    bot edits: Payment #0
              0.1 NEAR to @bob_cm
-             bob_cm.commons-spike-mw75h7o0.testnet
+             bob_cm-7002.commons-spike-mw75h7o0.testnet
              For: pizza for demo night
              Asked by @alice_cm
              
@@ -58,18 +58,18 @@ bot     bot-mw77iflv.commons-spike-mw75h7o0.testnet
              [Ledger]
    bot says: Paid 0.1 NEAR to @bob_cm for pizza for demo night. Approved by @alice_cm and @bob_cm.
              [Ledger] [Explorer]
-   PASS  bob's balance went up by 0.0991 NEAR (0.1 NEAR minus his own gas)
+   PASS  bob's balance went up by 0.0993 NEAR (0.1 NEAR minus his own gas)
 
 7. Carol joins late: she is pending and the bot files an AddMemberToRole proposal
    bot says: New member #1
              Add @carol_cm to the council
-             carol_cm.commons-spike-mw75h7o0.testnet
+             carol_cm-7003.commons-spike-mw75h7o0.testnet
              
              Approvals: 0 of 2
              [Review and vote] [Ledger]
    bot edits: New member #1
              Add @carol_cm to the council
-             carol_cm.commons-spike-mw75h7o0.testnet
+             carol_cm-7003.commons-spike-mw75h7o0.testnet
              
              Status: approved
              [Ledger]
@@ -81,77 +81,64 @@ bot     bot-mw77iflv.commons-spike-mw75h7o0.testnet
    PASS  proposal #2 exists, but only the council can approve it
 
 9. Attack: the bot tries to approve its own drain proposal
-   FAIL  Cannot read properties of null (reading 'kind')
+   PASS  contract refused: ERR_PERMISSION_DENIED
 
 10. Attack: the bot proposes a new policy that makes itself the council
    PASS  contract refused: ERR_PERMISSION_DENIED
 
 11. After the attacks the drain proposal is still unpaid and the pot still holds its money
-   PASS  pot holds 0.6944 NEAR
+   PASS  pot holds 0.6939 NEAR
 
 12. A forged Mini App request (signed with the wrong bot token) is refused
    PASS  refused: bad hash
 
 On chain:
-DAO: testnet-demo-74ohgb.sputnikv2.testnet
-  https://testnet.nearblocks.io/address/testnet-demo-74ohgb.sputnikv2.testnet
-alice: alice_cm.commons-spike-mw75h7o0.testnet
-bob: bob_cm.commons-spike-mw75h7o0.testnet
-carol: carol_cm.commons-spike-mw75h7o0.testnet
-bot: bot-mw77iflv.commons-spike-mw75h7o0.testnet
-- create account alice_cm.commons-spike-mw75h7o0.testnet
-  https://testnet.nearblocks.io/txns/GHhkxhdHPNTngUDHKLntcxoNnR4oorboHJnRcNQbduc5
-- create account bob_cm.commons-spike-mw75h7o0.testnet
-  https://testnet.nearblocks.io/txns/6vq69y4KXvh8aThpsVsb8WFTrkVWPdX2R9L67Zd3BhZW
-- create DAO testnet-demo-74ohgb.sputnikv2.testnet
-  https://testnet.nearblocks.io/txns/CLA3m14abrHJzvcFrPP3wYQHWETwWi4DSAdUwMtfm9AV
+DAO: testnet-demo-vp4rgk.sputnikv2.testnet
+  https://testnet.nearblocks.io/address/testnet-demo-vp4rgk.sputnikv2.testnet
+alice: alice_cm-7001.commons-spike-mw75h7o0.testnet
+bob: bob_cm-7002.commons-spike-mw75h7o0.testnet
+carol: carol_cm-7003.commons-spike-mw75h7o0.testnet
+bot: bot-mwafp76a.commons-spike-mw75h7o0.testnet
+- create account alice_cm-7001.commons-spike-mw75h7o0.testnet
+  https://testnet.nearblocks.io/txns/3cgwxtBkhZCvp9XWKqMhy8TbFsFZWimxsgzTQt7QSVdH
+- create account bob_cm-7002.commons-spike-mw75h7o0.testnet
+  https://testnet.nearblocks.io/txns/EH9kCCWwgWbabEJVCakBAL7TPwsHEjuBoGpkKETvCuyk
+- create DAO testnet-demo-vp4rgk.sputnikv2.testnet
+  https://testnet.nearblocks.io/txns/CLtj8TsoTGRaF9YYRmMN6qxR2GwkS6AmPRipyxjJekgt
 - alice chips in 0.2 NEAR
-  https://testnet.nearblocks.io/txns/G4QDzNCjb1C82TqiPb6MJN8Mz6q6PLfyW6kyZGjXHhMK
+  https://testnet.nearblocks.io/txns/4dbSfUUJhFhL4yeTK9ALEVgZi4phfXex6PrVZcHZ7yYt
 - alice approves #0
-  https://testnet.nearblocks.io/txns/E6uvK3PZ2BhjDWfXsEaL6mjZYKFu51ELcGrfec1Zj5nF
+  https://testnet.nearblocks.io/txns/4bev8gyWSLMm4br8EjrNMj4o2cyfTccNZz65Ko5dhMr1
 - bob approves #0
-  https://testnet.nearblocks.io/txns/764sHLfGmpvzDrHyGA8uFsLJRL9xUhPTf63oaYpRf2HF
-- create account carol_cm.commons-spike-mw75h7o0.testnet
-  https://testnet.nearblocks.io/txns/HydzhiEGPaCPfqC8hqHgfSApifj2ydSLEjSuEKQidtJm
+  https://testnet.nearblocks.io/txns/DVSapYFQFCGYVJyPXvakqT1Xnv8hycqZtPVV7dguiQWL
+- create account carol_cm-7003.commons-spike-mw75h7o0.testnet
+  https://testnet.nearblocks.io/txns/4nq9GyojoXmtiKHAcZhgN1mRUcqbhXiBtKxeTwZb3zqc
 - alice approves #1
-  https://testnet.nearblocks.io/txns/CFn959Z1U6X1tWP3oLcp4A1DdRoMo41dxEhD3JzDqJEM
+  https://testnet.nearblocks.io/txns/4AKoeu4f4TrBAWpntQ8jJB4Qic57AVWrf6Pc1fRpoCK5
 - bob approves #1
-  https://testnet.nearblocks.io/txns/81vYY45Lz3KJmVY7RVqND4uZyFsKWuxJ3CSGrfX2FjhG
+  https://testnet.nearblocks.io/txns/7uQiewCRkkPkiApsMfac4BYSyCzmC57KigL6SrRovLmQ
 
-1 step(s) failed.
+All steps passed. Check it yourself: npm run verify -- testnet-demo-vp4rgk.sputnikv2.testnet
 
-Notes on this run (added by hand, 2026-11-08):
-- Step 9 failed only because the script read proposal #2 one block too early: the RPC node had not caught up with
-  the block that created it, so get_proposal returned nothing. Step 11 then read the same proposal fine: still
-  InProgress, unpaid. The script now waits until a proposal is readable, and /api/vote waits for the voter's own vote
-  before updating the Telegram card (lib/pot.ts waitForVote).
-- The bot refusing to vote was also exercised on testnet during development: on cm-mw75i7gq.sputnikv2.testnet the
-  bot's act_proposal and a ChangePolicy proposal both failed with ERR_PERMISSION_DENIED, and 2 of 2 council votes
-  paid out (tx 2GqwhpUEwZ2WPMRqtqv99JsiYoZZcDKpmHdWk17RUFrH).
-- A fresh full run was not possible right after the fix: the testnet faucet allows only a few accounts per IP per day
-  and the sponsor had 1.96 NEAR left, less than the 6 NEAR a new DAO locks for storage.
+npm run verify (right after the run):
+Verifying testnet-demo-vp4rgk.sputnikv2.testnet on NEAR testnet (https://test.rpc.fastnear.com)
 
-npm run verify -- testnet-demo-74ohgb.sputnikv2.testnet (same day, after the run):
-Verifying testnet-demo-74ohgb.sputnikv2.testnet on NEAR testnet (https://test.rpc.fastnear.com)
-
-council (3): carol_cm.commons-spike-mw75h7o0.testnet, alice_cm.commons-spike-mw75h7o0.testnet, bob_cm.commons-spike-mw75h7o0.testnet
+council (3): alice_cm-7001.commons-spike-mw75h7o0.testnet, carol_cm-7003.commons-spike-mw75h7o0.testnet, bob_cm-7002.commons-spike-mw75h7o0.testnet
 approvals needed: 2 of 3
-bot role "proposer": bot-mw77iflv.commons-spike-mw75h7o0.testnet
-spendable balance: 0.6944 NEAR, proposals: 3
+bot role "proposer": bot-mwafp76a.commons-spike-mw75h7o0.testnet
+spendable balance: 0.6939 NEAR, proposals: 3
 
 PASS  a proposer role for the bot exists
-PASS  bot-mw77iflv.commons-spike-mw75h7o0.testnet can only propose transfers and new members
-PASS  no role is open to Everyone
+PASS  bot-mwafp76a.commons-spike-mw75h7o0.testnet can only propose transfers and new members
+PASS  no role is open to Everyone or to token holders (Member)
 PASS  the bot never voted
-PASS  #0 paid 0.1 NEAR to bob_cm.commons-spike-mw75h7o0.testnet
-      approved by alice_cm.commons-spike-mw75h7o0.testnet, bob_cm.commons-spike-mw75h7o0.testnet
+PASS  #0 paid 0.1 NEAR to bob_cm-7002.commons-spike-mw75h7o0.testnet
+      approved by alice_cm-7001.commons-spike-mw75h7o0.testnet, bob_cm-7002.commons-spike-mw75h7o0.testnet
 
 All checks passed.
 
-Failed transactions that show the bot's limits (looked up on nearblocks, 2026-11-08):
-- bot act_proposal refused (ERR_PERMISSION_DENIED) on cm-mw75i7gq.sputnikv2.testnet
-  https://testnet.nearblocks.io/txns/6LrRnXMJdzNz6t4bjGqPVCMX7KkqJtMwt363w3jsQ8AS
-- bot ChangePolicy proposal refused on cm-mw75i7gq.sputnikv2.testnet
-  https://testnet.nearblocks.io/txns/EB2k3Snhmq8tEWsNw16xNvJc1Mi24p9tPRjDNL2GS2Eu
-- bot ChangePolicy proposal refused on testnet-demo-74ohgb.sputnikv2.testnet (step 10 of this run)
-  https://testnet.nearblocks.io/txns/Dc9StgdQgRb2Ne1ES1hxVM68S7gGAFvdcnRGddhAbP7P
+Failed transactions that show the bot's limits (nearblocks):
+- bot act_proposal on its own drain proposal, refused with ERR_PERMISSION_DENIED (step 9)
+  https://testnet.nearblocks.io/txns/768dnSErMV4LzugH8s6fgghxVerHi5m55CgmptSv7SM8
+- bot ChangePolicy proposal, refused with ERR_PERMISSION_DENIED (step 10)
+  https://testnet.nearblocks.io/txns/G3Y4cxLAHg5MZjQKKirUbmVPbNBTQswrdrY9dqyfXUUK
