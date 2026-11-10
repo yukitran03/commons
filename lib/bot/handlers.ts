@@ -1,9 +1,9 @@
 // Telegram updates in, pot actions out.
-import { ensurePot, members, potByChat } from "../db.ts";
+import { ensurePot, members, potByChat, potByRef } from "../db.ts";
 import { councilOf, votesNeeded } from "../near/policy.ts";
 import { copy, UserError, who } from "./copy.ts";
 import { createTreasury, fmtNear, ledgerUrl, potCard, proposeSpend, type Deps } from "../pot.ts";
-import { answer, send } from "../telegram.ts";
+import { answer, parsePayload, send } from "../telegram.ts";
 
 const isGroup = (chat: any) => chat?.type === "group" || chat?.type === "supergroup";
 
@@ -24,6 +24,16 @@ export async function handleUpdate(d: Deps, update: any): Promise<void> {
   const chatId: number = msg.chat.id;
 
   if (!isGroup(msg.chat)) {
+    // A group button sent this person here with /start <payload>: hand them the Mini App as a web_app button.
+    const arg = msg.text.trim().split(/\s+/)[1];
+    if (cmd === "start" && arg) {
+      const p = parsePayload(arg);
+      const pot = p ? await potByRef(d.db, p.ref) : null;
+      if (!p || !pot) return void (await send(d.tg, chatId, copy.err.unknownPot));
+      const url = `${d.cfg.appUrl.replace(/\/$/, "")}/app?p=${arg}`;
+      await send(d.tg, chatId, copy.openApp(pot.title, p), [[{ text: "Open Commons", web_app: { url } }]]);
+      return;
+    }
     await send(d.tg, chatId, cmd === "help" ? copy.help : copy.privateChat);
     return;
   }

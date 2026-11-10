@@ -324,3 +324,21 @@ describe("sponsor running low", () => {
     expect(await memberByTg(w.db, CHAT, people.alice.id)).toBeNull();
   });
 });
+
+describe("opening the Mini App without a registered app", () => {
+  it("answers /start <payload> in a private chat with a web_app button that carries the payload", async () => {
+    await setup();
+    await handleUpdate(w.deps, w.msg(people.alice, `/start j_${ref}`, people.alice.id));
+    const last = w.tg.sent().at(-1);
+    const button = last?.body.reply_markup?.inline_keyboard?.flat()[0];
+    expect(button?.web_app?.url).toBe(`https://commons.test/app?p=j_${ref}`);
+    expect(last?.body.text).toMatch(/Hack Team/);
+  });
+
+  it("explains itself for a plain /start or an unknown payload", async () => {
+    await handleUpdate(w.deps, w.msg(people.alice, "/start", people.alice.id));
+    expect(w.tg.sent().at(-1)?.body.reply_markup).toBeUndefined();
+    await handleUpdate(w.deps, w.msg(people.alice, "/start j_zzzzzzzzzz", people.alice.id));
+    expect(w.tg.texts().at(-1)).toMatch(/does not belong|group/i);
+  });
+});

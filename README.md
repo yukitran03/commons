@@ -27,7 +27,7 @@ Needs Node 22.6 or newer and npm. Nothing below needs a key, a wallet or a Teleg
    ```
    npm ci
    ```
-2. Run the tests. Expect `Tests  145 passed (145)`:
+2. Run the tests. Expect `Tests  151 passed (151)`:
    ```
    npm test
    ```
@@ -50,7 +50,7 @@ Needs Node 22.6 or newer and npm. Nothing below needs a key, a wallet or a Teleg
    ```
    npm run quote -- arb-usdc 10
    ```
-   On 2026-11-08 the unauthenticated 1Click endpoint answered every quote with HTTP 500 after 25 seconds (see Honest limits). The command then prints `No quote: ...` and exits 1; that is the 1Click service, not this repo.
+   Expect a line like `The pot would receive 9.993454 USDC (at least 9.893519), about 25s.` (checked on 2026-11-10 for all six sources: USDC on Base, Arbitrum, Solana and Ethereum, USDT on Ethereum, and USDT on Tron with its 100 USD minimum). If 1Click is down, the command prints `No quote: <reason>` and exits 1.
 7. Optional: check the live deployment from the outside (no secrets). Expect 11 `PASS` lines and `All checks passed.`:
    ```
    npm run smoke
@@ -114,7 +114,7 @@ Postgres (Neon in production, PGlite locally) only maps Telegram chats and users
 
 ## Run your own bot
 
-1. Create a bot with [@BotFather](https://t.me/BotFather) (`/newbot`), then register a Mini App for it with `/newapp` and short name `app`, pointing at `https://<your-app>/app`.
+1. Create a bot with [@BotFather](https://t.me/BotFather) (`/newbot`). That is enough: without a registered Mini App, group buttons open the bot's private chat, and the bot answers with an "Open Commons" web_app button (web_app buttons work in private chats only). Optional, one tap shorter: register a Mini App with `/newapp`, short name `app`, URL `https://<your-app>/app`, and set `TELEGRAM_APP_SHORT_NAME=app`; group buttons then open it directly (`t.me/<bot>/app?startapp=...`).
 2. `npm run setup:testnet` creates a sponsor account (from the faucet, or reuses `SPONSOR_ACCOUNT_ID`/`SPONSOR_PRIVATE_KEY`) and a bot sub-account, and prints the env lines once. Each new group costs the sponsor 6 NEAR for the DAO plus 0.5 NEAR per member, so at least 7 NEAR.
 3. Create a Neon Postgres database. Put everything from [`.env.example`](.env.example) into the Vercel project (or `.env.local`), with `APP_URL` set to your deployment.
 4. Deploy (`vercel deploy`), then `npm run set-webhook`.
@@ -123,7 +123,7 @@ Postgres (Neon in production, PGlite locally) only maps Telegram chats and users
 ## Honest limits
 
 - **Testnet.** Everything runs on NEAR testnet. Testnet pots hold NEAR only; USDC spending is wired for mainnet but has not been run there.
-- **NEAR Intents quotes.** On 2026-11-08 the unauthenticated 1Click quote endpoint timed out on every attempt (HTTP 500, "Failed to receive response within timeout of 25000ms"). The client reports that instead of crashing. A partner JWT from partners.near-intents.org goes into `ONECLICK_JWT`. Intents have no testnet, so a testnet pot never hands out a deposit address; live deposits need mainnet and `INTENTS_LIVE=1`.
+- **NEAR Intents is mainnet only.** A testnet pot shows a live 1Click price but never a deposit address: 1Click only accepts mainnet recipients, so testnet quotes are priced to the mainnet account `sputnik-dao.near` as a stand-in (the price does not depend on the recipient). Live deposits need a mainnet pot, `INTENTS_LIVE=1` and the member's own refund address. On 2026-11-08 the unauthenticated 1Click endpoint timed out all day; on 2026-11-10 it answered for every source. A partner JWT (`ONECLICK_JWT`) lowers the fee.
 - **Cost per group.** A Sputnik DAO locks about 5.5 NEAR of storage, paid by the sponsor. A Telegram user can join many groups, and each join costs the sponsor 0.5 NEAR; there is no rate limit beyond one account per user per group yet.
 - **Lost phone.** The key lives on the phone (Telegram SecureStorage on mobile clients with Bot API 9.0+, otherwise the browser's localStorage). The Mini App can show the key for backup. If it is lost, the council can remove the member with a `RemoveMemberFromRole` proposal in any Sputnik UI; the bot does not offer that yet.
 - **The demo log.** [`docs/demo-run.log`](docs/demo-run.log) is the 2026-11-10 testnet run, 12 of 12 steps passing. An earlier run (2026-11-08, DAO `testnet-demo-74ohgb`) failed step 9 because the script read a proposal one block too early; that led to `waitForVote`.

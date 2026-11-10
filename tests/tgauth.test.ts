@@ -47,4 +47,10 @@ describe("Mini App links and payloads", () => {
     );
     expect(miniAppLink({ botUsername: "", appShortName: "", appUrl: "https://x.test", payload: "j_abcdefgh23" })).toBe("https://x.test/app?p=j_abcdefgh23");
   });
+
+  it("without a registered Mini App, sends people to the bot's private chat with the payload", () => {
+    expect(miniAppLink({ botUsername: "commons_near_bot", appShortName: "", appUrl: "https://x.test", payload: "v_abcdefgh23_4" })).toBe(
+      "https://t.me/commons_near_bot?start=v_abcdefgh23_4",
+    );
+  });
 });

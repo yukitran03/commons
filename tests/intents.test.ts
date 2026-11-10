@@ -80,3 +80,37 @@ describe("chipInStatus", () => {
     expect(await chipInStatus("0xabc", f)).toBeNull();
   });
 });
+
+describe("chipInQuoteParams", () => {
+  it("prices a testnet pot against a mainnet stand-in, dry only (1Click rejects testnet recipients)", async () => {
+    const { chipInQuoteParams, PREVIEW_RECIPIENT } = await import("../lib/intents.ts");
+    const src = SOURCES.find((s) => s.id === "arb-usdc")!;
+    expect(chipInQuoteParams({ network: "testnet", intentsLive: true, daoId: "team.sputnikv2.testnet", sourceId: "arb-usdc", memberRefund: "0xabc" })).toEqual({
+      recipient: PREVIEW_RECIPIENT,
+      refundTo: src.previewRefund,
+      dry: true,
+      preview: true,
+    });
+    expect(PREVIEW_RECIPIENT.endsWith(".near")).toBe(true);
+  });
+  it("quotes a mainnet pot for real only when live deposits are switched on and the member gave a refund address", async () => {
+    const { chipInQuoteParams } = await import("../lib/intents.ts");
+    const src = SOURCES.find((s) => s.id === "base-usdc")!;
+    expect(chipInQuoteParams({ network: "mainnet", intentsLive: false, daoId: "team.sputnik-dao.near", sourceId: "base-usdc", memberRefund: "0xabc" })).toEqual({ recipient: "team.sputnik-dao.near", refundTo: src.previewRefund, dry: true, preview: false });
+    expect(chipInQuoteParams({ network: "mainnet", intentsLive: true, daoId: "team.sputnik-dao.near", sourceId: "base-usdc", memberRefund: "0xabc" })).toEqual({ recipient: "team.sputnik-dao.near", refundTo: "0xabc", dry: false, preview: false });
+  });
+});
+
+describe("preview refund addresses", () => {
+  it("are ordinary-looking addresses that 1Click accepts, never burn or contract addresses", () => {
+    for (const s of SOURCES) {
+      expect(s.previewRefund).not.toMatch(/dead/i);
+      if (s.id.endsWith("usdc") || s.id === "eth-usdt") {
+        if (s.id.startsWith("sol")) expect(s.previewRefund).toMatch(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/);
+        else expect(s.previewRefund).toMatch(/^0x[0-9a-fA-F]{40}$/);
+      }
+      if (s.id === "tron-usdt") expect(s.previewRefund).toMatch(/^T[1-9A-HJ-NP-Za-km-z]{33}$/);
+      expect(s.previewRefund.toLowerCase()).not.toContain(s.assetId.split("-")[1]?.split(".")[0]?.toLowerCase() ?? "@");
+    }
+  });
+});

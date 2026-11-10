@@ -1,6 +1,7 @@
 // Plain Bot API over fetch, behind a tiny interface so tests and the demo can record calls instead of sending them.
 
-export type Kb = { text: string; callback_data?: string; url?: string }[][];
+/** web_app buttons only work in private chats; groups get url buttons. */
+export type Kb = { text: string; callback_data?: string; url?: string; web_app?: { url: string } }[][];
 
 export interface Tg {
   call(method: string, body: Record<string, unknown>): Promise<any>;
@@ -46,6 +47,8 @@ export const answer = (tg: Tg, callbackId: string, text?: string) => tg.call("an
  */
 export function miniAppLink(o: { botUsername: string; appShortName: string; appUrl: string; payload: string }): string {
   if (o.botUsername && o.appShortName) return `https://t.me/${o.botUsername}/${o.appShortName}?startapp=${o.payload}`;
+  // No registered Mini App: open the bot's private chat, where /start <payload> answers with a web_app button.
+  if (o.botUsername) return `https://t.me/${o.botUsername}?start=${o.payload}`;
   return `${o.appUrl.replace(/\/$/, "")}/app?p=${o.payload}`;
 }
 

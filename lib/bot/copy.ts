@@ -22,6 +22,13 @@ export const copy = {
 
   privateChat: "Add me to a group, then send /commons there. Each member gets their own NEAR account, and money only moves when a majority of the council approves.",
 
+  openApp: (title: string, p: { mode: string; id?: number }) =>
+    p.mode === "vote"
+      ? `Proposal #${p.id} in <b>${esc(title)}</b>. Tap Open Commons to review it and vote with your own key.`
+      : p.mode === "chip"
+        ? `Tap Open Commons to chip in to <b>${esc(title)}</b>.`
+        : `Tap Open Commons to join the pot of <b>${esc(title)}</b>. Your NEAR account and its key are created on this phone.`,
+
   addedToGroup: "Hi. I keep this group's money in a NEAR treasury that no single person holds. Send /commons to set it up.",
 
   setup: (title: string, joined: string[]) =>

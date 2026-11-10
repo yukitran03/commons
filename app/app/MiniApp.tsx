@@ -110,7 +110,9 @@ export default function MiniApp() {
     (async () => {
       // telegram-web-app.js may still be loading; only a page with no initData after a short wait is outside Telegram.
       const fromUrl = new URLSearchParams(location.search).get("p");
-      const app = await waitFor(() => (tgApp()?.initData ? tgApp() : undefined), { timeoutMs: fromUrl ? 600 : 3000 });
+      // Wait for the script itself (it defines Telegram.WebApp in any browser), then let initData decide.
+      const webApp = await waitFor(() => tgApp(), { timeoutMs: 4000 });
+      const app = webApp?.initData ? webApp : undefined;
       if (cancelled) return;
       if (app) {
         setInTelegram(true);

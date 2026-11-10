@@ -1,9 +1,9 @@
 // npm run quote -- [source] [amount] [recipient]: one dry-run NEAR Intents 1Click quote, the same call the Mini App
 // makes for "chip in from another chain". Sources: base-usdc, arb-usdc, sol-usdc, eth-usdc, tron-usdt, eth-usdt.
-import { SOURCES, quoteChipIn } from "../lib/intents.ts";
+import { PREVIEW_RECIPIENT, SOURCES, quoteChipIn } from "../lib/intents.ts";
 import { fromUnits } from "../lib/tokens.ts";
 
-const [sourceId = "arb-usdc", amount = "10", recipient = "commons-demo.sputnik-dao.near"] = process.argv.slice(2);
+const [sourceId = "arb-usdc", amount = "10", recipient = PREVIEW_RECIPIENT] = process.argv.slice(2);
 const src = SOURCES.find((s) => s.id === sourceId);
 if (!src) {
   console.error(`unknown source ${sourceId}; use one of ${SOURCES.map((s) => s.id).join(", ")}`);
