@@ -6,7 +6,9 @@ Built for NEAR Hackathon 2026. Tracks: **Social Money**, **Real-World Money**. R
 
 **Live:** https://commons-near.vercel.app · **Telegram bot:** [@commons_near_bot](https://t.me/commons_near_bot) · **Public ledger of the demo DAO:** https://commons-near.vercel.app/c/testnet-demo-vp4rgk.sputnikv2.testnet
 
-![Landing page and public ledger at phone width](docs/img/landing-and-ledger.png)
+![Landing page: the vault scene shows member keys, the proposer-only bot and a majority approving](docs/img/landing-3d.png)
+
+![Public ledger read from the chain](docs/img/ledger.png)
 
 ## The problem
 
