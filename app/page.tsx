@@ -58,20 +58,20 @@ export default async function Home() {
   return (
     <main className="immersive min-h-dvh overflow-x-clip">
       <nav className="pill-nav fixed left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full p-1.5 text-sm" aria-label="Main">
-        <a href="#top" className="flex min-h-10 items-center gap-2 rounded-full px-3 font-semibold">
+        <a href="#top" className="flex min-h-11 items-center gap-2 rounded-full px-3 font-semibold">
           <span className="grid size-6 place-items-center rounded-md bg-primary text-on-primary">
             <Icon name="shield" size={14} />
           </span>
           Commons
         </a>
-        <a href="#how" className="hidden min-h-10 items-center rounded-full px-3 text-muted transition-colors duration-200 hover:text-fg sm:flex">
+        <a href="#how" className="hidden min-h-11 items-center rounded-full px-3 text-muted transition-colors duration-200 hover:text-fg sm:flex">
           How it works
         </a>
-        <a href="#safety" className="hidden min-h-10 items-center rounded-full px-3 text-muted transition-colors duration-200 hover:text-fg sm:flex">
+        <a href="#safety" className="hidden min-h-11 items-center rounded-full px-3 text-muted transition-colors duration-200 hover:text-fg sm:flex">
           Safety
         </a>
         {demoDao ? (
-          <a href={`/c/${demoDao}`} className="flex min-h-10 items-center rounded-full px-3 text-muted transition-colors duration-200 hover:text-fg">
+          <a href={`/c/${demoDao}`} className="flex min-h-11 items-center rounded-full px-3 text-muted transition-colors duration-200 hover:text-fg">
             Ledger
           </a>
         ) : null}
