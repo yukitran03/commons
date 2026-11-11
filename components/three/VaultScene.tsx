@@ -31,7 +31,16 @@ function memberPos(i: number, out = new THREE.Vector3()) {
   return out.set(Math.cos(a) * RING, Math.sin(a * 2) * 0.25, Math.sin(a) * RING);
 }
 
-function Story({ still, particles }: { still: boolean; particles: number }) {
+/** Which beat of the story is on screen, for the caption under the scene (components/three/HeroVault.tsx). */
+export function beatAt(phase: number): number {
+  if (phase < 1.4) return 0; // the bot drafts a payment
+  if (phase < 3.5) return Math.min(3, Math.floor((phase - 1.4) / 0.7) + 1); // approval 1, 2, 3 of 3
+  if (phase < 5.2) return 4; // the vault pays
+  return 5; // back to rest
+}
+
+function Story({ still, particles, onBeat }: { still: boolean; particles: number; onBeat?: (beat: number) => void }) {
+  const beat = useRef(-1);
   const root = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Group>(null);
   const bot = useRef<THREE.Group>(null);
@@ -58,6 +67,13 @@ function Story({ still, particles }: { still: boolean; particles: number }) {
     l.computeLineDistances();
     return l;
   }, []);
+  const orbits = useMemo(() => {
+    const circle = (r: number) => new THREE.BufferGeometry().setFromPoints(new THREE.EllipseCurve(0, 0, r, r).getPoints(128).map((p) => new THREE.Vector3(p.x, 0, p.y)));
+    const inner = new THREE.LineLoop(circle(RING), new THREE.LineBasicMaterial({ color: C.amber, transparent: true, opacity: 0.12 }));
+    const outer = new THREE.LineLoop(circle(BOT_RING), new THREE.LineDashedMaterial({ color: C.bot, dashSize: 0.05, gapSize: 0.09, transparent: true, opacity: 0.25 }));
+    outer.computeLineDistances();
+    return [inner, outer];
+  }, []);
   const vaultEdges = useMemo(
     () => new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.85, 0)), new THREE.LineBasicMaterial({ color: C.amber, transparent: true, opacity: 0.55 })),
     [],
@@ -78,13 +94,13 @@ function Story({ still, particles }: { still: boolean; particles: number }) {
   // Free GPU memory for objects created outside JSX.
   useEffect(
     () => () => {
-      for (const w of [...wires, botWire, vaultEdges]) {
+      for (const w of [...wires, botWire, vaultEdges, ...orbits]) {
         w.geometry.dispose();
         (w.material as THREE.Material).dispose();
       }
       dustGeo.dispose();
     },
-    [wires, botWire, vaultEdges, dustGeo],
+    [wires, botWire, vaultEdges, orbits, dustGeo],
   );
 
   const tmp = useMemo(() => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Color() }), []);
@@ -93,6 +109,11 @@ function Story({ still, particles }: { still: boolean; particles: number }) {
     // A still frame (reduced motion) shows the approved moment: three green keys and a lit core.
     const t = still ? PERIOD * 0.5 : state.clock.elapsedTime;
     const phase = t % PERIOD;
+    const b = beatAt(phase);
+    if (b !== beat.current) {
+      beat.current = b;
+      onBeat?.(b);
+    }
     if (!still && ring.current) ring.current.rotation.y += delta * 0.12;
     if (!still && bot.current) bot.current.rotation.y -= delta * 0.05;
     if (!still && dust.current) dust.current.rotation.y += delta * 0.01;
@@ -159,16 +180,18 @@ function Story({ still, particles }: { still: boolean; particles: number }) {
       {/* The vault: glass shell, amber edges, glowing core. */}
       <mesh>
         <icosahedronGeometry args={[0.85, 0]} />
-        <meshPhysicalMaterial color={C.glass} roughness={0.15} metalness={0.3} clearcoat={1} transparent opacity={0.55} />
+        <meshPhysicalMaterial color={C.glass} roughness={0.15} metalness={0.3} clearcoat={1} transparent opacity={0.38} />
       </mesh>
       <primitive object={vaultEdges} />
+      <primitive object={orbits[0]} />
+      <primitive object={orbits[1]} />
       <mesh ref={core}>
         <sphereGeometry args={[0.3, 32, 32]} />
-        <meshBasicMaterial color={C.amber} />
+        <meshBasicMaterial color={C.amber} toneMapped={false} />
       </mesh>
       <mesh ref={halo}>
         <sphereGeometry args={[0.55, 32, 32]} />
-        <meshBasicMaterial color={C.amber} transparent opacity={0.18} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <meshBasicMaterial color={C.amber} transparent opacity={0.18} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
       </mesh>
 
       {/* Member keys on the inner ring, each wired to the vault. */}
@@ -195,11 +218,11 @@ function Story({ still, particles }: { still: boolean; particles: number }) {
 
       <mesh ref={proposal} visible={false}>
         <sphereGeometry args={[0.07, 16, 16]} />
-        <meshBasicMaterial color="#e2e8f0" />
+        <meshBasicMaterial color="#e2e8f0" toneMapped={false} />
       </mesh>
       <mesh ref={payment} visible={false}>
         <sphereGeometry args={[0.09, 16, 16]} />
-        <meshBasicMaterial color={C.amber} />
+        <meshBasicMaterial color={C.amber} toneMapped={false} />
       </mesh>
 
       <points ref={dust} geometry={dustGeo}>
@@ -209,7 +232,7 @@ function Story({ still, particles }: { still: boolean; particles: number }) {
   );
 }
 
-export default function VaultScene() {
+export default function VaultScene({ onBeat }: { onBeat?: (beat: number) => void }) {
   const host = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(true);
   const [still, setStill] = useState(false);
@@ -242,7 +265,7 @@ export default function VaultScene() {
         onCreated={({ camera }) => camera.lookAt(0, -0.15, 0)}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <Story still={still} particles={small ? 450 : 1100} />
+        <Story still={still} particles={small ? 450 : 1100} onBeat={onBeat} />
       </Canvas>
     </div>
   );

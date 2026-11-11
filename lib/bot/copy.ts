@@ -5,6 +5,18 @@ import type { MemberRow } from "../db.ts";
 export const who = (m: Pick<MemberRow, "tg_username" | "display"> | null | undefined, fallback = "someone") =>
   m ? (m.tg_username ? `@${esc(m.tg_username)}` : esc(m.display)) : fallback;
 
+/** Telegram's bot description (max 512 characters) and short description (max 120), set by npm run set-webhook. */
+export const BOT_DESCRIPTION = [
+  "Commons keeps your group's money in a NEAR treasury that no single person holds.",
+  "",
+  "Add me to a Telegram group and send /commons. Each member gets their own NEAR account, and its key stays on their phone.",
+  "",
+  "I can draft payments, but I cannot vote or move money. A payment goes out only when a majority of the council approves it.",
+  "",
+  "Runs on NEAR testnet.",
+].join("\n");
+export const BOT_SHORT_DESCRIPTION = "A group treasury on NEAR. I draft payments; only a majority of your group can approve them.";
+
 export const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
 
 export const copy = {

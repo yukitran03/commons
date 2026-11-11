@@ -40,7 +40,19 @@ console.log(`Smoke test of ${base}\n`);
 await check("landing page renders", () => expectStatus(get("/"), 200, "Why the money is safe"));
 await check("Mini App page renders", () => expectStatus(get("/app"), 200));
 if (dao) await check(`public ledger reads ${dao} from the chain and shows the bot is proposer only`, () => expectStatus(get(`/c/${dao}`), 200, "Bot cannot vote or move money"));
-await check("unknown DAO gives 404", () => expectStatus(get("/c/does-not-exist-zz.testnet"), 404));
+if (dao)
+  await check(`ledger CSV of ${dao} downloads with a header row`, async () => {
+    const r = await get(`/c/${dao}/csv`);
+    const text = await r.text();
+    if (r.status !== 200) return `expected HTTP 200, got ${r.status}`;
+    if (!/^text\/csv/.test(r.headers.get("content-type") ?? "")) return `content-type is ${r.headers.get("content-type")}`;
+    return text.startsWith("id,submitted_utc,kind,amount,token,to,status") ? true : `unexpected first line: ${text.split("\n")[0]}`;
+  });
+await check("link preview image renders", async () => {
+  const r = await get("/opengraph-image");
+  return r.status === 200 && (r.headers.get("content-type") ?? "").startsWith("image/png") ? true : `HTTP ${r.status}, ${r.headers.get("content-type")}`;
+});
+await check("unknown DAO gives 404",() => expectStatus(get("/c/does-not-exist-zz.testnet"), 404));
 await check("webhook refuses requests without Telegram's secret token", () => expectStatus(post("/api/telegram", { update_id: 1 }), 403));
 await check("webhook refuses a wrong secret token", () => expectStatus(post("/api/telegram", { update_id: 1 }, { "x-telegram-bot-api-secret-token": "wrong" }), 403));
 await check("unknown pot gives 404", () => expectStatus(post("/api/pot", { ref: "aaaaaaaaaa" }), 404));

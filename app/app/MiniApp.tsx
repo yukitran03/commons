@@ -144,7 +144,7 @@ export default function MiniApp() {
 
   return (
     <main className={`${inTelegram ? "tg" : ""} min-h-dvh bg-bg px-4 pb-10 pt-4 text-fg`}>
-      <div className="mx-auto max-w-md space-y-4">
+      <div className="stagger mx-auto max-w-md space-y-4">
         <header className="flex items-center gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-on-primary">
             <Icon name="shield" size={20} />

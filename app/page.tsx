@@ -1,5 +1,8 @@
-import HeroVault from "@/components/three/HeroVault.tsx";
+import ChatDemo from "@/components/ChatDemo.tsx";
+import CountUp from "@/components/CountUp.tsx";
 import Reveal from "@/components/Reveal.tsx";
+import Spotlight from "@/components/Spotlight.tsx";
+import HeroVault from "@/components/three/HeroVault.tsx";
 import { Icon } from "@/components/ui.tsx";
 import { PROPOSER_ROLE, botIsProposerOnly, councilOf, votesNeeded } from "@/lib/near/policy.ts";
 import { fmtNear } from "@/lib/pot.ts";
@@ -39,16 +42,27 @@ async function liveStats(dao: string) {
   }
 }
 
-const steps = [
-  { icon: "users" as const, title: "Everyone joins in the chat", body: "Tap Join and get your own NEAR account. The key is created on your phone and never leaves it." },
-  { icon: "send" as const, title: "Ask for money in one line", body: "/spend 25 NEAR @huc monitor for demo day. The bot turns it into a proposal on the group's Sputnik DAO." },
-  { icon: "vote" as const, title: "A majority approves, the DAO pays", body: "Members sign their vote on their own phone. When enough approve, the contract pays out. Nobody can skip the vote." },
+const facts = [
+  { icon: "wallet" as const, title: "No single holder", body: "The money sits in a Sputnik DAO, the contract Trezu builds on. Not in a teammate's wallet." },
+  { icon: "lock" as const, title: "The bot cannot pay itself", body: "Its DAO role is proposer only. Whoever got hold of the bot's key could draft payments, and the contract would refuse everything else." },
+  { icon: "globe" as const, title: "Anyone can check", body: "The ledger reads the rules, votes and payments straight from the chain. So does npm run verify." },
 ];
 
-const facts = [
-  { title: "No single holder", body: "The money sits in a Sputnik DAO, the contract Trezu builds on. Not in a teammate's wallet." },
-  { title: "The bot cannot pay itself", body: "Its DAO role is proposer only. Whoever got hold of the bot's key could draft payments, and the contract would refuse everything else." },
-  { title: "Anyone can check", body: "The ledger reads the rules, votes and payments straight from the chain. So does npm run verify." },
+// Today vs Commons, row by row.
+const compare = [
+  { q: "Where the money sits", before: "In one teammate's wallet", after: "In a Sputnik DAO the group owns" },
+  { q: "Who can spend it", before: "Whoever holds that key, alone", after: "Only a majority of the council" },
+  { q: "If the key or the bot is stolen", before: "The money goes with it", after: "The bot can only draft; the contract refuses the rest" },
+  { q: "The record", before: "Screenshots and trust", after: "Every vote and payment on chain, in a public ledger" },
+  { q: "Where it happens", before: "A wallet app, a bank, a spreadsheet", after: "The Telegram chat the group already uses" },
+];
+
+const stack = [
+  { name: "Sputnik DAO v2", what: "holds the money and counts the votes" },
+  { name: "Named accounts", what: "every member is <name>.<sponsor>" },
+  { name: "Keys made on the phone", what: "the server only sees public keys" },
+  { name: "NEAR Intents 1Click", what: "chip in from Base, Arbitrum, Solana, Ethereum, Tron" },
+  { name: "Telegram Mini App", what: "vote where the group already talks" },
 ];
 
 const HEADLINE = "Group money nobody has to hold.".split(" ");
@@ -57,6 +71,7 @@ export default async function Home() {
   const stats = await liveStats(demoDao);
   return (
     <main className="immersive min-h-dvh overflow-x-clip">
+      <Spotlight />
       <nav className="pill-nav fixed left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full p-1.5 text-sm" aria-label="Main">
         <a href="#top" className="flex min-h-11 items-center gap-2 rounded-full px-3 font-semibold">
           <span className="grid size-6 place-items-center rounded-md bg-primary text-on-primary">
@@ -66,6 +81,9 @@ export default async function Home() {
         </a>
         <a href="#how" className="hidden min-h-11 items-center rounded-full px-3 text-muted transition-colors duration-200 hover:text-fg sm:flex">
           How it works
+        </a>
+        <a href="#compare" className="hidden min-h-11 items-center rounded-full px-3 text-muted transition-colors duration-200 hover:text-fg md:flex">
+          Why
         </a>
         <a href="#safety" className="hidden min-h-11 items-center rounded-full px-3 text-muted transition-colors duration-200 hover:text-fg sm:flex">
           Safety
@@ -138,7 +156,9 @@ export default async function Home() {
             ].map((s, i) => (
               <Reveal key={s.k} delay={i * 80}>
                 <div className="text-xs uppercase tracking-wider text-muted">{s.k}</div>
-                <div className="font-display mt-1 text-3xl font-semibold tabular-nums">{s.v}</div>
+                <div className="font-display mt-1 text-3xl font-semibold tabular-nums">
+                  <CountUp value={s.v} />
+                </div>
               </Reveal>
             ))}
           </div>
@@ -151,37 +171,63 @@ export default async function Home() {
 
       <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-24 sm:px-6">
         <Reveal>
-          <h2 className="font-display text-3xl font-semibold sm:text-4xl">How it works</h2>
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-link">How it works</p>
+          <h2 className="font-display mt-3 max-w-2xl text-3xl font-semibold sm:text-4xl">From a chat message to a payment, with the group in charge</h2>
         </Reveal>
-        <ol className="mt-10 grid gap-4 sm:grid-cols-3">
-          {steps.map((s, i) => (
-            <li key={s.title}>
-              <Reveal delay={i * 100} className="h-full">
-                <div className="group h-full rounded-3xl border border-line bg-card p-6 transition-colors duration-300 hover:border-primary/50">
-                  <div className="flex items-center justify-between">
-                    <span className="grid size-11 place-items-center rounded-2xl bg-primary/10 text-primary">
-                      <Icon name={s.icon} size={20} />
-                    </span>
-                    <span className="font-display text-5xl font-semibold text-white/10 transition-colors duration-300 group-hover:text-primary/30">0{i + 1}</span>
-                  </div>
-                  <h3 className="mt-6 text-lg font-semibold">{s.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">{s.body}</p>
+        <Reveal className="mt-12">
+          <ChatDemo />
+        </Reveal>
+      </section>
+
+      <section id="compare" className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-24 sm:px-6">
+        <Reveal>
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-link">Why it matters</p>
+          <h2 className="font-display mt-3 max-w-2xl text-3xl font-semibold sm:text-4xl">Today, one person holds the group&apos;s money</h2>
+          <p className="mt-4 max-w-2xl text-muted">
+            Hackathon prizes are paid in one payment to one account. Event budgets and club funds work the same way. Everyone else trusts that person to pay them back.
+          </p>
+        </Reveal>
+        <Reveal className="mt-10">
+          <div className="overflow-hidden rounded-3xl border border-line">
+            <div className="grid grid-cols-[1fr_1fr] text-xs font-medium uppercase tracking-wider sm:grid-cols-[0.8fr_1fr_1fr]">
+              <div className="hidden px-5 py-4 text-muted sm:block" />
+              <div className="px-5 py-4 text-muted">One wallet</div>
+              <div className="flex items-center gap-2 bg-primary/[0.07] px-5 py-4 text-primary">
+                <Icon name="shield" size={14} /> Commons
+              </div>
+            </div>
+            {compare.map((r) => (
+              <div key={r.q} className="grid grid-cols-[1fr_1fr] border-t border-line text-sm sm:grid-cols-[0.8fr_1fr_1fr]">
+                <div className="col-span-2 px-5 pt-4 text-xs font-medium uppercase tracking-wider text-muted sm:col-span-1 sm:py-4 sm:text-sm sm:normal-case sm:tracking-normal sm:text-fg">
+                  {r.q}
                 </div>
-              </Reveal>
-            </li>
-          ))}
-        </ol>
+                <div className="flex gap-2 px-5 py-3 text-muted sm:py-4">
+                  <Icon name="x" size={16} className="mt-0.5 shrink-0 text-bad" />
+                  {r.before}
+                </div>
+                <div className="flex gap-2 bg-primary/[0.07] px-5 py-3 sm:py-4">
+                  <Icon name="check" size={16} className="mt-0.5 shrink-0 text-ok" />
+                  {r.after}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Reveal>
       </section>
 
       <section id="safety" className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-24 sm:px-6">
         <Reveal>
-          <h2 className="font-display text-3xl font-semibold sm:text-4xl">Why the money is safe</h2>
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-link">Safety</p>
+          <h2 className="font-display mt-3 text-3xl font-semibold sm:text-4xl">Why the money is safe</h2>
         </Reveal>
-        <div className="mt-10 grid gap-8 sm:grid-cols-3">
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {facts.map((f, i) => (
-            <Reveal key={f.title} delay={i * 100}>
-              <div className="border-l-2 border-primary pl-5">
-                <h3 className="font-semibold">{f.title}</h3>
+            <Reveal key={f.title} delay={i * 100} className="h-full">
+              <div className="spotlight h-full rounded-3xl border border-line bg-card p-6 transition-colors duration-300 hover:border-primary/40">
+                <span className="grid size-10 place-items-center rounded-2xl bg-primary/10 text-primary">
+                  <Icon name={f.icon} size={18} />
+                </span>
+                <h3 className="mt-5 font-semibold">{f.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted">{f.body}</p>
               </div>
             </Reveal>
@@ -214,6 +260,26 @@ export default async function Home() {
             </ul>
           </div>
         </Reveal>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6" aria-labelledby="stack">
+        <Reveal>
+          <h2 id="stack" className="text-xs font-medium uppercase tracking-[0.18em] text-link">
+            Built on NEAR
+          </h2>
+        </Reveal>
+        <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {stack.map((x, i) => (
+            <li key={x.name}>
+              <Reveal delay={i * 60} className="h-full">
+                <div className="spotlight h-full rounded-2xl border border-line bg-card px-4 py-4">
+                  <div className="font-display font-semibold">{x.name}</div>
+                  <div className="mt-1 text-xs leading-relaxed text-muted">{x.what}</div>
+                </div>
+              </Reveal>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="grain relative overflow-hidden border-t border-line">
