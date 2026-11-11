@@ -90,6 +90,9 @@ export default async function Ledger({ params }: { params: Promise<{ dao: string
             <a href={accountUrl(cfg.explorer, dao)} className="inline-flex min-h-11 items-center gap-1 text-sm text-link hover:underline">
               Open in explorer <Icon name="external" size={14} />
             </a>
+            <a href={`/c/${dao}/csv`} download className="inline-flex min-h-11 items-center gap-1 text-sm text-link hover:underline">
+              Download CSV <Icon name="download" size={14} />
+            </a>
           </div>
 
           <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">

@@ -15,6 +15,7 @@ const PATHS: Record<string, string[]> = {
   lock: ["M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z", "M7 11V7a5 5 0 0 1 10 0v4"],
   alert: ["m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3", "M12 9v4", "M12 17h.01"],
   copy: ["M8 8h12v12H8z", "M4 16V4h12"],
+  download: ["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", "m7 10 5 5 5-5", "M12 15V3"],
 };
 
 export function Icon({ name, size = 18, className = "", label }: { name: keyof typeof PATHS; size?: number; className?: string; label?: string }) {

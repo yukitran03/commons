@@ -32,6 +32,8 @@ The sponsor is the parent of member accounts, but on NEAR a parent account has n
 
 **A spoofed webhook.** `/api/telegram` requires the secret token set with `setWebhook` and compares it in constant time.
 
+**A poisoned ledger export.** The proposer's note is free text, and `/c/<dao>/csv` puts it in a spreadsheet. `csvCell` in `lib/ledgerCsv.ts` prefixes anything a spreadsheet would run as a formula (`=`, `+`, `-`, `@`) with `'` and quotes commas, quotes and line breaks (`tests/ledgerCsv.test.ts`).
+
 **Someone takes over a member's Telegram account.** They can use Telegram but not the member's key, which sits on the member's phone. Joining again from their own device returns the existing account, and the Mini App's on-chain key check then tells them this device does not hold its key, so they cannot vote with it.
 
 **A join link leaks outside the group.** Links are not invitations: the bot asks Telegram (`getChatMember`) whether the person is in the group before creating an account.
