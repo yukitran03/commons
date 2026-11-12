@@ -4,7 +4,7 @@
 
 **Group money nobody has to hold.** A Telegram group treasury on NEAR. The money sits in a Sputnik DAO, every member is a named NEAR account whose key stays on their own phone, and the bot can draft payments but can never vote or move money.
 
-![NEAR testnet](https://img.shields.io/badge/NEAR-testnet-f59e0b) ![Tests](https://img.shields.io/badge/tests-162%20passing-34d399) ![Attacks refused on testnet](https://img.shields.io/badge/bot%20attacks%20refused%20on%20testnet-4%2F4-34d399) ![License MIT](https://img.shields.io/badge/license-MIT-64748b)
+![NEAR testnet](https://img.shields.io/badge/NEAR-testnet-f59e0b) ![Tests](https://img.shields.io/badge/tests-167%20passing-34d399) ![Attacks refused on testnet](https://img.shields.io/badge/bot%20attacks%20refused%20on%20testnet-4%2F4-34d399) ![License MIT](https://img.shields.io/badge/license-MIT-64748b)
 
 NEAR Hackathon 2026 · Tracks: **Social Money**, **Real-World Money** · Solo entry
 
@@ -27,7 +27,7 @@ A team's shared money (prize money, an event budget, a club fund) lands in one p
 
 ## How it works
 
-![The /spend message, the payment card and the Mini App vote screen, as shown on the landing page](docs/img/chat-demo.png)
+![The /spend message, the payment card and the Mini App vote screen, as shown on the landing page](docs/img/chat-demo.jpg)
 
 1. **Join.** Someone sends `/commons` in the group. Each member taps **Join** and gets a NEAR account such as `huc.commons.testnet`. The key is generated on their phone and never leaves it.
 2. **Create the treasury.** A founder taps **Create treasury**. Commons deploys a Sputnik DAO with the founders as council and the bot in a `proposer` role that holds exactly `transfer:AddProposal` and `add_member_to_role:AddProposal`.
@@ -83,7 +83,7 @@ Needs Node 22.6 or newer and npm. Nothing below needs a key, a wallet or a Teleg
 | Command | What it does | Expect |
 |---|---|---|
 | `npm ci` | Installs exact versions | |
-| `npm test` | Unit and end-to-end tests with a fake Telegram and an in-memory Sputnik model | `Tests  162 passed (162)` |
+| `npm test` | Unit and end-to-end tests with a fake Telegram and an in-memory Sputnik model | `Tests  167 passed (167)` |
 | `npm run demo` | The whole story offline: real bot logic, simulated Sputnik rules. Steps 8 to 11 are the attack | 12 steps `PASS`, then `All steps passed.` |
 | `npm run verify` | Reads `testnet-demo-vp4rgk.sputnikv2.testnet` from NEAR and checks the bot can only propose, no role is open to everyone, the bot never voted, every payment has council approvals. Any DAO: `npm run verify -- <dao>` | `All checks passed.` |
 | `npm run smoke` | Checks the live deployment from outside: pages, the ledger and its CSV, the link preview, and that every endpoint refuses unsigned requests | 13 `PASS` lines, `All checks passed.` |
@@ -127,11 +127,11 @@ The full transcript of our testnet run, with explorer links for every account, v
 
 ## Screens
 
-| Join (Mini App) | Chip in from another chain (Mini App) | Public ledger |
+| Vote (Mini App) | Member card (Mini App) | Public ledger |
 |---|---|---|
-| ![Join screen](docs/img/miniapp-join.png) | ![Chip in screen](docs/img/miniapp-chip-in.png) | ![Public ledger read from the chain](docs/img/ledger.png) |
+| ![Vote screen: the payment laid out as a cheque, with the vote meter (one arc per council member) and the signatures still needed](docs/img/miniapp-vote.png) | ![Member card: the NEAR account whose key this phone holds](docs/img/miniapp-member.png) | ![Public ledger read from the chain, laid out as an account book with a status stamp per proposal](docs/img/ledger.jpg) |
 
-Outside Telegram the Mini App shows a demo identity picker (only with `DEMO_MODE=1` on testnet). Inside Telegram the identity comes from Telegram and the colors follow the user's Telegram theme.
+Outside Telegram the Mini App shows a demo identity picker (only with `DEMO_MODE=1` on testnet). Inside Telegram the identity comes from Telegram, and the backgrounds and text follow the user's Telegram theme (light or dark) while the gold accents stay.
 
 ## Layout
 

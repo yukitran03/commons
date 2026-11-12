@@ -4,6 +4,7 @@
 // vote screen (app/app/MiniApp.tsx). It plays while on screen, can be paused, and each step can be opened directly.
 // With reduced motion it shows the final state and plays only on request.
 import { useEffect, useRef, useState } from "react";
+import { ArcMeter } from "./ArcMeter.tsx";
 import { Icon } from "./ui.tsx";
 
 // Frames of the story and how long each one stays (ms).
@@ -67,11 +68,11 @@ export default function ChatDemo() {
   return (
     <div ref={host} className="grid items-center gap-10 lg:grid-cols-[1fr_minmax(0,400px)] lg:gap-16">
       <div>
-        <ol className="space-y-3">
+        <ol className="border-y border-[var(--rule-strong)]">
           {STEPS.map((s, i) => {
             const on = step === i;
             return (
-              <li key={s.title}>
+              <li key={s.title} className="border-b border-[var(--rule)] last:border-b-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -80,27 +81,26 @@ export default function ChatDemo() {
                     setPlaying(!still);
                   }}
                   aria-current={on ? "step" : undefined}
-                  className={`group relative w-full overflow-hidden rounded-3xl border p-5 text-left transition-colors duration-300 ${
-                    on ? "border-primary/60 bg-primary/[0.06]" : "border-line bg-card hover:border-white/25"
+                  className={`group relative w-full overflow-hidden px-2 py-6 text-left transition-colors duration-300 sm:px-4 ${
+                    on ? "bg-[rgb(251_191_36/0.12)]" : "hover:bg-[rgb(28_23_16/0.03)]"
                   }`}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-5">
                     <span
-                      className={`font-display grid size-10 shrink-0 place-items-center rounded-2xl text-lg font-semibold transition-colors duration-300 ${
-                        on ? "bg-primary text-on-primary" : "bg-white/5 text-muted"
-                      }`}
+                      className={`font-display w-12 shrink-0 text-5xl font-semibold leading-[0.9] transition-opacity duration-300 ${on ? "foil" : "text-muted opacity-35"}`}
+                      aria-hidden
                     >
                       {i + 1}
                     </span>
                     <span>
-                      <span className="block text-lg font-semibold">{s.title}</span>
-                      <span className="mt-1 block text-sm leading-relaxed text-muted">{s.body}</span>
+                      <span className="font-display block text-2xl font-medium">{s.title}</span>
+                      <span className="mt-1.5 block leading-relaxed text-muted">{s.body}</span>
                     </span>
                   </div>
                   {on ? (
                     <span
                       key={`${i}-${run}`}
-                      className="step-progress absolute bottom-0 left-0 h-0.5 bg-primary"
+                      className="step-progress absolute bottom-0 left-0 h-[3px] bg-[#c27a0e]"
                       style={{ animationDuration: `${STEP_MS[i]}ms`, animationPlayState: playing && visible ? "running" : "paused" }}
                       aria-hidden
                     />
@@ -118,7 +118,7 @@ export default function ChatDemo() {
               setPlaying(!playing);
             }}
             aria-pressed={playing}
-            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-4 font-medium text-fg transition-colors duration-200 hover:bg-white/5"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--rule-strong)] px-4 font-medium text-fg transition-colors duration-200 hover:bg-[rgb(28_23_16/0.05)]"
           >
             {playing ? <PauseIcon /> : <PlayIcon />} {playing ? "Pause" : f === LAST ? "Play the story" : "Play"}
           </button>
@@ -175,21 +175,26 @@ export default function ChatDemo() {
             aria-hidden={!sheet}
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
-            <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>Payment #4</span>
-              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 font-medium text-amber-200">Voting</span>
-            </div>
-            <div className="font-display mt-2 text-3xl font-semibold">25 NEAR</div>
-            <div className="text-xs text-slate-300">
-              to <span className="font-mono">huc.commons.testnet</span>
-            </div>
-            <p className="mt-2 text-xs text-slate-400">Note from the proposer: monitor for demo day</p>
-            <div className="mt-3 flex justify-between text-xs">
-              <span>Approvals</span>
-              <span className="tabular-nums">{f >= 4 ? 1 : 0} of 2</span>
-            </div>
-            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-emerald-400 transition-[width] duration-500" style={{ width: f >= 4 ? "50%" : "0%" }} />
+            <div className="guilloche rounded-2xl border border-white/10 p-3 text-slate-100">
+              <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                <span>Payment #4</span>
+                <span className="rounded border border-amber-300/60 px-1.5 py-px text-amber-200">Voting</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] uppercase tracking-[0.16em] text-slate-400">Pay</div>
+                  <div className="font-display text-3xl font-medium leading-none">25 NEAR</div>
+                  <div className="mt-1 text-xs text-slate-300">
+                    to <span className="font-mono">huc.commons.testnet</span>
+                  </div>
+                </div>
+                <ArcMeter seats={3} approvals={f >= 4 ? 1 : 0} needed={2} size={50} className="text-slate-100" />
+              </div>
+              <p className="mt-2 border-t border-white/10 pt-2 text-xs text-slate-400">Note from the proposer: monitor for demo day</p>
+              <div className="mt-2 flex justify-between text-xs">
+                <span>Signatures</span>
+                <span className="tabular-nums">{f >= 4 ? 1 : 0} of 2</span>
+              </div>
             </div>
             {f >= 4 ? (
               <div className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-400/10 px-3 py-2 text-xs text-emerald-300">
@@ -212,9 +217,8 @@ function Phone({ children }: { children: React.ReactNode }) {
   // On narrow screens the phone comes first, so the story is visible while the steps are read below it.
   return (
     <div className="relative order-first mx-auto w-full max-w-[400px] lg:order-none">
-      <div className="vault-glow pointer-events-none absolute -inset-10 opacity-60" aria-hidden />
-      <div className="relative overflow-hidden rounded-[2.4rem] border border-white/12 bg-[#0b0f16] p-2 shadow-[0_40px_120px_-30px_rgb(0_0_0/0.9)]">
-        <div className="overflow-hidden rounded-[1.9rem] bg-[#0e1621]">{children}</div>
+      <div className="relative overflow-hidden rounded-[2.4rem] border border-black/40 bg-[#0b0f16] p-2 shadow-[0_2px_0_rgb(255_255_255/0.6),0_50px_70px_-30px_rgb(60_40_10/0.6),0_20px_30px_-20px_rgb(60_40_10/0.4)]">
+        <div className="overflow-hidden rounded-[1.9rem] bg-[#0e1621] text-slate-100">{children}</div>
       </div>
     </div>
   );

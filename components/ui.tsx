@@ -56,13 +56,6 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
   return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium ${TONES[tone]}`}>{children}</span>;
 }
 
-export function statusTone(status: string): Tone {
-  if (status === "Approved") return "ok";
-  if (status === "Rejected" || status === "Failed" || status === "Removed" || status === "Expired") return "bad";
-  if (status === "InProgress") return "warn";
-  return "neutral";
-}
-
 export function statusLabel(status: string, isTransfer: boolean): string {
   if (status === "Approved") return isTransfer ? "Paid" : "Approved";
   if (status === "InProgress") return "Voting";
@@ -71,14 +64,4 @@ export function statusLabel(status: string, isTransfer: boolean): string {
 
 export function Mono({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <span className={`font-mono text-[0.85em] break-all ${className}`}>{children}</span>;
-}
-
-export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <div className="text-xs font-medium uppercase tracking-wide text-muted">{label}</div>
-      <div className="mt-1 text-xl font-semibold tabular-nums">{value}</div>
-      {hint ? <div className="mt-0.5 text-sm text-muted">{hint}</div> : null}
-    </div>
-  );
 }

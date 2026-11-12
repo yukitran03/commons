@@ -3,7 +3,8 @@
 // straight to NEAR. The server only ever receives public keys and "please re-read proposal N" requests.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Account, KeyPair, KeyPairSigner, actions, teraToGas, type KeyPairString } from "near-api-js";
-import { Badge, Card, Icon, Mono, Stat, statusLabel, statusTone } from "@/components/ui.tsx";
+import { Badge, Card, Icon, Mono, statusLabel } from "@/components/ui.tsx";
+import { ArcMeter } from "@/components/ArcMeter.tsx";
 import { Logo } from "@/components/Logo.tsx";
 import { loadKey, saveKey, type KeyPlace } from "@/lib/client/keys.ts";
 import { hasKey, pickJoinKey, waitFor } from "@/lib/client/join.ts";
@@ -63,9 +64,9 @@ function account(info: PotInfo, accountId: string, secret: string) {
 
 function Button({ children, onClick, busy, tone = "primary", disabled }: { children: React.ReactNode; onClick: () => void; busy?: boolean; tone?: "primary" | "ok" | "bad" | "ghost"; disabled?: boolean }) {
   const tones = {
-    primary: "bg-primary text-on-primary",
-    ok: "bg-ok text-white",
-    bad: "bg-bad text-white",
+    primary: "btn-gold font-semibold",
+    ok: "bg-ok text-on-ok font-semibold",
+    bad: "border-2 border-bad bg-transparent text-bad font-semibold",
     ghost: "border border-line bg-transparent text-fg",
   };
   return (
@@ -105,6 +106,7 @@ export default function MiniApp() {
   const [info, setInfo] = useState<PotInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [inTelegram, setInTelegram] = useState(false);
+  const [scheme, setScheme] = useState<"light" | "dark" | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +119,9 @@ export default function MiniApp() {
       if (cancelled) return;
       if (app) {
         setInTelegram(true);
+        // Telegram's theme can differ from the OS one; the page follows Telegram.
+        setScheme(app.colorScheme === "dark" ? "dark" : "light");
+        app.onEvent?.("themeChanged", () => setScheme(app.colorScheme === "dark" ? "dark" : "light"));
         app.ready();
         app.expand?.();
         setAuth({ initData: app.initData });
@@ -144,12 +149,12 @@ export default function MiniApp() {
   }, [refresh]);
 
   return (
-    <main className={`${inTelegram ? "tg" : ""} min-h-dvh bg-bg px-4 pb-10 pt-4 text-fg`}>
+    <main className={`${inTelegram ? "tg" : ""} min-h-dvh bg-bg px-4 pb-10 pt-4 text-fg`} data-scheme={scheme}>
       <div className="stagger mx-auto max-w-md space-y-4">
         <header className="flex items-center gap-3">
           <Logo size={40} />
           <div className="min-w-0">
-            <div className="truncate font-semibold">{info?.title ?? "Commons"}</div>
+            <div className="font-display truncate text-xl font-medium leading-tight">{info?.title ?? "Commons"}</div>
             <div className="truncate text-xs text-muted">{info?.daoId ? <Mono>{info.daoId}</Mono> : "Group treasury on NEAR"}</div>
           </div>
           {info ? (
@@ -274,11 +279,26 @@ function Join({ info, auth, onDone }: { info: PotInfo; auth: Auth; onDone: () =>
 
   if (info.me) {
     return (
-      <Card className="space-y-3">
+      <Card className="space-y-4">
         <div className="flex items-center gap-2 font-semibold">
           <Icon name="check" className="text-ok" /> You are in
         </div>
-        <Stat label="Your NEAR account" value={<Mono>{info.me.accountId}</Mono>} hint={roleText(info.me.role)} />
+        {/* The member card: the account this phone holds the key for. */}
+        <div className="member-card relative overflow-hidden rounded-2xl p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#d6c7ae]">Commons · member</div>
+              <div className="font-display mt-1 truncate text-xl font-medium text-[#fde68a]">{info.title}</div>
+            </div>
+            <Logo size={40} />
+          </div>
+          <div className="mt-7 text-[10px] uppercase tracking-[0.2em] text-[#d6c7ae]">Your NEAR account</div>
+          <div className="mt-1 break-all font-mono text-sm">{info.me.accountId}</div>
+          <div className="mt-3 flex items-end justify-between gap-3 text-xs text-[#d6c7ae]">
+            <span>{roleText(info.me.role)}</span>
+            <span className="shrink-0 font-mono uppercase">{info.network}</span>
+          </div>
+        </div>
         {done?.txHash ? (
           <p className="text-sm text-muted">
             Key stored {done.place === "telegram-secure-storage" ? "in Telegram's secure storage on this phone" : "in this browser"}. <TxLink info={info} hash={done.txHash} />
@@ -292,7 +312,7 @@ function Join({ info, auth, onDone }: { info: PotInfo; auth: Auth; onDone: () =>
   return (
     <Card className="space-y-4">
       <div>
-        <h1 className="text-lg font-semibold">Join {info.title}</h1>
+        <h1 className="font-display text-2xl font-medium">Join {info.title}</h1>
         <p className="mt-1 text-sm text-muted">You get your own NEAR account. Its key is created on this device and never leaves it. Commons pays the account's first fees.</p>
       </div>
       <ul className="space-y-2 text-sm">
@@ -372,24 +392,34 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
   const onCouncil = !!info.me && council.includes(info.me.accountId);
   const canVote = onCouncil && p.status === "InProgress" && !mine && view.votable;
 
+  const ink = p.status === "Approved" ? "text-ok" : p.status === "InProgress" ? "text-pend" : "text-bad";
+  // One signature line per approval still needed, after the ones already given.
+  const open = Math.max(0, needed - approvals.length);
+
   return (
-    <Card className="space-y-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="text-sm text-muted">
+    <Card className="guilloche space-y-4">
+      <div className="flex items-center justify-between gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
+        <span>
           {view.label} #{p.id}
-        </div>
-        <Badge tone={statusTone(p.status)}>{statusLabel(p.status, view.transfer)}</Badge>
+        </span>
+        <span className={`stamp text-[11px] ${ink}`} style={{ ["--r" as string]: "-4deg" }}>
+          {statusLabel(p.status, view.transfer)}
+        </span>
       </div>
-      {view.transfer && view.votable ? (
-        <div>
-          <div className="text-3xl font-semibold tabular-nums">{view.headline}</div>
-          <div className="mt-1 text-sm">
-            to <Mono>{view.target}</Mono>
+      <div className="flex items-center justify-between gap-4">
+        {view.transfer && view.votable ? (
+          <div className="min-w-0">
+            <div className="text-[11px] uppercase tracking-[0.16em] text-muted">Pay</div>
+            <div className="font-display text-4xl font-medium leading-tight tabular-nums">{view.headline}</div>
+            <div className="mt-1 text-sm">
+              to <Mono>{view.target}</Mono>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="text-lg font-semibold">{view.headline}</div>
-      )}
+        ) : (
+          <div className="font-display min-w-0 text-xl font-medium">{view.headline}</div>
+        )}
+        <ArcMeter seats={Math.max(council.length, 1)} approvals={approvals.length} rejections={rejections.length} needed={needed} size={64} className="text-fg" />
+      </div>
       {view.warning ? (
         <Notice tone="bad">
           <span className="flex gap-2">
@@ -398,27 +428,35 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
         </Notice>
       ) : null}
       {!view.votable ? <pre className="max-h-48 overflow-auto rounded-lg bg-bg p-2 font-mono text-xs">{JSON.stringify(p.kind, null, 2)}</pre> : null}
-      <p className="text-sm text-muted">
+      <p className="border-y border-line py-3 text-sm text-muted">
         <span className="font-medium">Note from the proposer: </span>
         {p.description}
       </p>
 
       <div>
         <div className="flex justify-between text-sm">
-          <span>Approvals</span>
-          <span className="tabular-nums">
-            {approvals.length} of {needed}
+          <span className="font-medium">Signatures</span>
+          <span className="tabular-nums text-muted">
+            {approvals.length} of {needed} needed
           </span>
         </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-bg" role="progressbar" aria-valuemin={0} aria-valuemax={needed} aria-valuenow={approvals.length}>
-          <div className="h-full rounded-full bg-ok transition-[width] duration-300" style={{ width: `${Math.min(100, (approvals.length / needed) * 100)}%` }} />
-        </div>
-        <ul className="mt-3 space-y-1 text-xs text-muted">
+        <ul className="mt-2 space-y-1.5" aria-label="Council votes">
           {[...approvals, ...rejections].map(([a, v]) => (
-            <li key={a} className="flex items-center gap-1">
-              <Icon name={v === "Approve" ? "check" : "x"} size={12} className={v === "Approve" ? "text-ok" : "text-bad"} /> <Mono>{a}</Mono>
+            <li key={a} className="flex items-end gap-2 border-b border-line pb-1">
+              <Icon name={v === "Approve" ? "check" : "x"} size={14} className={`mb-1 shrink-0 ${v === "Approve" ? "text-ok" : "text-bad"}`} />
+              <span className={`sig truncate text-lg leading-tight ${v === "Approve" ? "" : "line-through decoration-bad"}`} title={a}>
+                {a.split(".")[0]}
+              </span>
+              <span className="mb-0.5 ml-auto shrink-0 font-mono text-xs text-muted">{v === "Approve" ? "approved" : "rejected"}</span>
             </li>
           ))}
+          {p.status === "InProgress"
+            ? Array.from({ length: open }, (_, i) => (
+                <li key={`open-${i}`} className="flex min-h-8 items-end gap-2 border-b border-dashed border-line pb-1 text-xs text-muted">
+                  Signature needed
+                </li>
+              ))
+            : null}
         </ul>
       </div>
 
@@ -452,7 +490,7 @@ function ChipIn({ info }: { info: PotInfo }) {
   return (
     <Card className="space-y-4">
       <div>
-        <h1 className="text-lg font-semibold">Chip in</h1>
+        <h1 className="font-display text-2xl font-medium">Chip in</h1>
         <p className="mt-1 text-sm text-muted">{info.rules ? `The pot holds ${near(info.rules.holdsYocto)}.` : "The treasury has not been created yet."}</p>
       </div>
       <div role="tablist" className="grid grid-cols-2 rounded-xl bg-bg p-1 text-sm">
@@ -537,7 +575,7 @@ function FromNear({ info }: { info: PotInfo }) {
         value={amount}
         onChange={(e) => setAmount(e.target.value.replace(",", "."))}
         aria-invalid={!valid}
-        className="min-h-12 w-full rounded-xl border border-line bg-bg px-3 font-mono text-lg tabular-nums"
+        className="font-display min-h-14 w-full rounded-xl border border-line bg-bg px-3 text-2xl tabular-nums"
       />
       <p className="text-xs text-muted">
         From <Mono>{info.me.accountId}</Mono> to <Mono>{info.daoId}</Mono>

@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
-/* Design tokens. Web pages use the Commons palette (light and dark). Inside Telegram (.tg) the same tokens map to
-   Telegram's theme parameters, with the Commons palette as the fallback. */
+/* Design tokens. Web pages use the Commons palette: warm paper and ink in light mode, warm near-black in dark mode,
+   satin gold as the one accent. Inside Telegram (.tg) the surfaces map to Telegram's theme parameters and the gold stays. */
 :root {
-  --d-bg: #ffffff;
-  --d-fg: #0f172a;
-  --d-muted: #475569;
-  --d-card: #f1f5f9;
-  --d-border: #e2e8f0;
+  --d-bg: #f6f1e7;
+  --d-fg: #1c1710;
+  --d-muted: #5f5548;
+  --d-card: #fffdf8;
+  --d-border: #e3d8c5;
   --d-primary: #d97706;
-  --d-on-primary: #ffffff;
-  --d-link: #b45309;
+  --d-on-primary: #1a1206;
+  --d-link: #8a5208;
 
   --c-bg: var(--d-bg);
   --c-fg: var(--d-fg);
@@ -20,26 +20,32 @@
   --c-primary: var(--d-primary);
   --c-on-primary: var(--d-on-primary);
   --c-link: var(--d-link);
-  --c-ok: #047857;
-  --c-ok-soft: color-mix(in srgb, #047857 14%, transparent);
-  --c-bad: #b91c1c;
-  --c-bad-soft: color-mix(in srgb, #b91c1c 14%, transparent);
+  --c-ok: #17694a;
+  --c-on-ok: #ffffff;
+  --c-ok-soft: color-mix(in srgb, var(--c-ok) 14%, transparent);
+  --c-bad: #b4231b;
+  --c-on-bad: #ffffff;
+  --c-bad-soft: color-mix(in srgb, var(--c-bad) 14%, transparent);
   --c-warn-soft: color-mix(in srgb, #d97706 16%, transparent);
+  --c-pend: #8a5a00;
   color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --d-bg: #0f172a;
-    --d-fg: #f8fafc;
-    --d-muted: #94a3b8;
-    --d-card: #1b2232;
-    --d-border: #2c3a52;
+    --d-bg: #0d0b08;
+    --d-fg: #f5f1ea;
+    --d-muted: #a8a29e;
+    --d-card: #17130e;
+    --d-border: #2e271d;
     --d-primary: #f59e0b;
-    --d-on-primary: #0f172a;
+    --d-on-primary: #1a1206;
     --d-link: #fbbf24;
     --c-ok: #34d399;
+    --c-on-ok: #052e1c;
     --c-bad: #f87171;
+    --c-on-bad: #2a0606;
+    --c-pend: #fbbf24;
   }
 }
 
@@ -49,9 +55,24 @@
   --c-muted: var(--tg-theme-hint-color, var(--d-muted));
   --c-card: var(--tg-theme-secondary-bg-color, var(--d-card));
   --c-border: color-mix(in srgb, var(--tg-theme-hint-color, var(--d-muted)) 28%, transparent);
-  --c-primary: var(--tg-theme-button-color, var(--d-primary));
-  --c-on-primary: var(--tg-theme-button-text-color, var(--d-on-primary));
   --c-link: var(--tg-theme-link-color, var(--d-link));
+}
+/* Telegram tells the page its scheme (MiniApp.tsx sets data-scheme), which may differ from the OS setting. */
+.tg[data-scheme="light"] {
+  --c-ok: #17694a;
+  --c-on-ok: #ffffff;
+  --c-bad: #b4231b;
+  --c-on-bad: #ffffff;
+  --c-primary: #d97706;
+  --c-pend: #8a5a00;
+}
+.tg[data-scheme="dark"] {
+  --c-ok: #34d399;
+  --c-on-ok: #052e1c;
+  --c-bad: #f87171;
+  --c-on-bad: #2a0606;
+  --c-primary: #f59e0b;
+  --c-pend: #fbbf24;
 }
 
 @theme inline {
@@ -64,6 +85,9 @@
   --color-on-primary: var(--c-on-primary);
   --color-link: var(--c-link);
   --color-ok: var(--c-ok);
+  --color-on-ok: var(--c-on-ok);
+  --color-on-bad: var(--c-on-bad);
+  --color-pend: var(--c-pend);
   --color-ok-soft: var(--c-ok-soft);
   --color-bad: var(--c-bad);
   --color-bad-soft: var(--c-bad-soft);
@@ -113,6 +137,7 @@ body {
   --c-link: #fbbf24;
   --c-ok: #34d399;
   --c-bad: #f87171;
+  --c-pend: #fbbf24;
   --gold-hi: #fde68a;
   --gold: #fbbf24;
   --gold-mid: #f59e0b;
@@ -202,21 +227,6 @@ body {
   background: rgb(251 191 36 / 0.08);
   border-color: rgb(251 191 36 / 0.45);
 }
-/* A card with a hairline gold border that is brighter at the top-left, like light on the logo's arcs. */
-.card-gold {
-  border: 1px solid transparent;
-  background:
-    linear-gradient(var(--panel), var(--panel)) padding-box,
-    linear-gradient(150deg, rgb(253 230 138 / 0.38), rgb(255 255 255 / 0.05) 38%, rgb(255 255 255 / 0.04) 70%, rgb(217 119 6 / 0.3)) border-box;
-}
-/* Gold icon chip: the metal itself, with a dark glyph. */
-.chip-gold {
-  color: #1a1206;
-  background: linear-gradient(160deg, #fde68a, #f59e0b 60%, #b45309);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.55),
-    0 6px 20px -8px rgb(255 154 26 / 0.8);
-}
 /* Section marker: three short gold bars with gaps, the logo's three arcs unrolled. */
 .seg {
   display: inline-flex;
@@ -271,8 +281,10 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-space), var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  letter-spacing: -0.015em;
 }
 
 /* Headline words rise in one after another. */
@@ -389,30 +401,284 @@ body {
   animation-delay: 180ms;
 }
 
-/* Cards that light up under the pointer (components/Spotlight.tsx sets --x and --y). */
-.spotlight {
-  position: relative;
-  isolation: isolate;
-}
-.spotlight::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  opacity: 0;
-  transition: opacity 0.3s;
-  background: radial-gradient(420px circle at var(--x, 50%) var(--y, 50%), rgb(255 170 50 / 0.11), transparent 45%);
-}
-.spotlight:hover::before {
-  opacity: 1;
-}
-
 /* Pill navigation with a frosted background. */
 .pill-nav {
-  background: rgb(12 10 8 / 0.6);
+  background: rgb(12 10 8 / 0.84);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgb(255 226 180 / 0.1);
   box-shadow: inset 0 1px 0 rgb(253 230 138 / 0.06);
+}
+
+/* ---------- The ledger book: paper, ink, receipts and stamps ----------
+   Below the hero the landing becomes a sheet of warm paper on the dark desk. The ledger page uses the same sheet.
+   Contrast on #f4eee3: ink 15.4:1, muted 6.3:1, foil 5.5:1, stamp green 5.8:1, stamp red 5.7:1. */
+.paper {
+  --c-bg: #f4eee3;
+  --c-fg: #1c1710;
+  --c-muted: #5f5548;
+  --c-card: #fffdf8;
+  --c-border: rgb(28 23 16 / 0.14);
+  --c-primary: #d97706;
+  --c-on-primary: #1a1206;
+  --c-link: #8a5208;
+  --c-ok: #17694a;
+  --c-on-ok: #ffffff;
+  --c-bad: #b4231b;
+  --c-on-bad: #ffffff;
+  --c-pend: #8a5a00;
+  --paper-2: #ebe3d4;
+  --slip: #fffdf8;
+  --foil: #8a5208;
+  --rule: rgb(28 23 16 / 0.14);
+  --rule-strong: rgb(28 23 16 / 0.62);
+  --margin-red: rgb(196 64 52 / 0.5);
+  color-scheme: light;
+  color: var(--c-fg);
+  background-color: var(--c-bg);
+  /* Paper fibres: static noise tinted brown, so it costs nothing per frame. */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.36  0 0 0 0 0.27  0 0 0 0 0.16  -0.9 0 0 0 0.52'/></filter><rect width='100%' height='100%' filter='url(%23p)'/></svg>");
+}
+.paper ::selection {
+  background: rgb(251 191 36 / 0.45);
+}
+
+/* A sheet laid on the desk: rounded top, a warm glow behind it, and a torn bottom edge. */
+.sheet {
+  position: relative;
+  border-radius: 28px 28px 0 0;
+  box-shadow:
+    0 -1px 0 rgb(255 236 200 / 0.55),
+    0 -50px 140px -60px rgb(255 160 40 / 0.35);
+}
+.tear-bottom::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 9px;
+  background: conic-gradient(from -45deg at 50% 100%, var(--tear, #f4eee3) 90deg, transparent 0) 0 0 / 18px 100%;
+}
+
+/* Section mark: a section sign and number, like a clause in the group's book, with a rule running out to the edge. */
+.section-mark {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+.section-mark::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule, var(--c-border));
+}
+.section-mark b {
+  font-weight: 500;
+  color: var(--foil, var(--c-link));
+}
+
+/* Gold leaf on paper: big numerals only (large text, so 3:1 is the floor; the darkest stop measures above 5:1). */
+.foil {
+  background: linear-gradient(180deg, #c58a1c 0%, #9a5d08 45%, #6e3f04 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Highlighter swiped across a phrase when it scrolls into view. */
+.marker {
+  background: linear-gradient(100deg, rgb(251 191 36 / 0) 0.6%, rgb(251 191 36 / 0.5) 2%, rgb(252 211 77 / 0.38) 96%, rgb(252 211 77 / 0) 99%) no-repeat 0 88% / 0% 62%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-size 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 250ms);
+}
+.reveal:not([data-reveal="pending"]) .marker {
+  background-size: 100% 62%;
+}
+
+/* Thermal receipt that prints out of a slot. */
+.printer {
+  position: relative;
+  padding-top: 12px;
+  /* Clip only the top edge, so the receipt appears to come out of the slot while its shadow stays visible. */
+  clip-path: inset(0 -80px -120px -80px);
+}
+.printer::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: -16px;
+  right: -16px;
+  height: 18px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #3a3128, #15110c 70%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 240 210 / 0.18),
+    0 6px 14px -6px rgb(0 0 0 / 0.6);
+}
+.receipt {
+  position: relative;
+  background: #fffdf8;
+  color: #1c1710;
+  font-family: var(--font-mono);
+  box-shadow:
+    0 1px 0 rgb(28 23 16 / 0.06),
+    0 24px 40px -24px rgb(60 40 10 / 0.45);
+}
+.receipt::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 8px;
+  background: conic-gradient(from -45deg at 50% 100%, #fffdf8 90deg, transparent 0) 0 0 / 16px 100%;
+}
+@keyframes print {
+  from {
+    transform: translateY(-101%);
+  }
+}
+.reveal[data-reveal="pending"] .receipt {
+  transform: translateY(-101%);
+}
+.reveal:not([data-reveal="pending"]) .receipt {
+  animation: print 1.8s steps(18, end) 0.3s both;
+}
+.dots {
+  flex: 1;
+  min-width: 1rem;
+  border-bottom: 1.5px dotted rgb(28 23 16 / 0.45);
+  transform: translateY(-0.28em);
+}
+.barcode {
+  height: 34px;
+  background: repeating-linear-gradient(
+    90deg,
+    #1c1710 0 2px,
+    transparent 2px 4px,
+    #1c1710 4px 5px,
+    transparent 5px 8px,
+    #1c1710 8px 11px,
+    transparent 11px 12px,
+    #1c1710 12px 13px,
+    transparent 13px 17px
+  );
+}
+
+/* Rubber stamp: ink pressed through a grainy pad, set down with a thud when it scrolls into view. */
+.stamp {
+  --r: -7deg;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.28em 0.6em;
+  border: 2.5px solid currentColor;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  transform: rotate(var(--r));
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -2.4 0 0 0 2.05'/></filter><rect width='100%' height='100%' filter='url(%23s)'/></svg>")
+    0 0 / 160px;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -2.4 0 0 0 2.05'/></filter><rect width='100%' height='100%' filter='url(%23s)'/></svg>")
+    0 0 / 160px;
+}
+@keyframes thud {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--r)) scale(1.9);
+  }
+  55% {
+    opacity: 1;
+    transform: rotate(var(--r)) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(var(--r)) scale(1);
+  }
+}
+.reveal[data-reveal="pending"] .thud {
+  opacity: 0;
+}
+.reveal:not([data-reveal="pending"]) .thud {
+  animation: thud 0.42s cubic-bezier(0.3, 0.7, 0.4, 1) var(--d, 0.6s) both;
+}
+
+/* A slip of paper with a ticket-stub perforation down its left edge. */
+.slip {
+  background: var(--slip, #fffdf8);
+  -webkit-mask: radial-gradient(circle at 0 7px, transparent 3.5px, #000 4px) 0 0 / 100% 14px repeat-y;
+  mask: radial-gradient(circle at 0 7px, transparent 3.5px, #000 4px) 0 0 / 100% 14px repeat-y;
+}
+.slip-shadow {
+  filter: drop-shadow(0 14px 18px rgb(60 40 10 / 0.16));
+}
+
+/* The charter: a double-ruled frame, like a printed certificate. */
+.charter {
+  border: 1px solid var(--rule-strong);
+  outline: 1px solid var(--rule-strong);
+  outline-offset: -7px;
+}
+
+/* Account-book lines: a red double margin line down the left. */
+.ledger-lines {
+  background-image: linear-gradient(90deg, transparent 30px, var(--margin-red) 30px 31px, transparent 31px 34px, var(--margin-red) 34px 35px, transparent 35px);
+}
+.double-under {
+  text-decoration: underline double;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+/* Cheque: fine interference rings, like the security print on a real one. Uses the text colour, so it works in
+   Telegram's light and dark themes alike. */
+.guilloche {
+  background-image:
+    repeating-radial-gradient(circle at 105% -10%, color-mix(in srgb, currentColor 6%, transparent) 0 1px, transparent 1px 6px),
+    repeating-radial-gradient(circle at -10% 120%, color-mix(in srgb, currentColor 4%, transparent) 0 1px, transparent 1px 8px);
+}
+.sig {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+}
+
+/* Member card: the brand's metal on black, the same in either theme. */
+.member-card {
+  color: #f5f1ea;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgb(255 154 26 / 0.28), transparent 55%),
+    radial-gradient(80% 60% at 0% 100%, rgb(253 230 138 / 0.08), transparent 60%),
+    linear-gradient(160deg, #1d160d, #0a0806 70%);
+  box-shadow:
+    inset 0 1px 0 rgb(253 230 138 / 0.25),
+    inset 0 0 0 1px rgb(253 230 138 / 0.12),
+    0 18px 40px -20px rgb(0 0 0 / 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal:not([data-reveal="pending"]) .receipt,
+  .reveal:not([data-reveal="pending"]) .thud {
+    animation: none;
+  }
+  .reveal[data-reveal="pending"] .receipt {
+    transform: none;
+  }
+  .reveal[data-reveal="pending"] .thud {
+    opacity: 1;
+  }
+  .marker {
+    transition: none;
+  }
 }

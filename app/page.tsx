@@ -1,8 +1,7 @@
 import ChatDemo from "@/components/ChatDemo.tsx";
-import CountUp from "@/components/CountUp.tsx";
 import Reveal from "@/components/Reveal.tsx";
-import Spotlight from "@/components/Spotlight.tsx";
 import HeroVault from "@/components/three/HeroVault.tsx";
+import { ArcMeter } from "@/components/ArcMeter.tsx";
 import { Icon } from "@/components/ui.tsx";
 import { Logo } from "@/components/Logo.tsx";
 import { PROPOSER_ROLE, botIsProposerOnly, councilOf, votesNeeded } from "@/lib/near/policy.ts";
@@ -43,10 +42,11 @@ async function liveStats(dao: string) {
   }
 }
 
-const facts = [
-  { icon: "wallet" as const, title: "No single holder", body: "The money sits in a Sputnik DAO, the contract Trezu builds on. Not in a teammate's wallet." },
-  { icon: "lock" as const, title: "The bot cannot pay itself", body: "Its DAO role is proposer only. Whoever got hold of the bot's key could draft payments, and the contract would refuse everything else." },
-  { icon: "globe" as const, title: "Anyone can check", body: "The ledger reads the rules, votes and payments straight from the chain. So does npm run verify." },
+// The safety rules, written as the articles of the group's charter.
+const articles = [
+  { n: "I", title: "No single holder", body: "The money sits in a Sputnik DAO, the contract Trezu builds on. Not in a teammate's wallet." },
+  { n: "II", title: "The bot cannot pay itself", body: "Its DAO role is proposer only. Whoever got hold of the bot's key could draft payments, and the contract would refuse everything else." },
+  { n: "III", title: "Anyone can check", body: "The ledger reads the rules, votes and payments straight from the chain. So does npm run verify." },
 ];
 
 // Today vs Commons, row by row.
@@ -68,25 +68,37 @@ const stack = [
 
 const HEADLINE = "Group money nobody has to hold.".split(" ");
 
-/** Section label with the brand's three-bar marker (the logo's arcs, unrolled). */
-function Eyebrow({ children, id, as: Tag = "p", className = "" }: { children: React.ReactNode; id?: string; as?: "p" | "h2"; className?: string }) {
+/** Hero label with the brand's three-bar marker (the logo's arcs, unrolled). */
+function Eyebrow({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <Tag id={id} className={`flex items-center gap-3 text-xs font-medium uppercase tracking-[0.18em] text-link ${className}`}>
+    <p className={`flex items-center gap-3 text-xs font-medium uppercase tracking-[0.18em] text-link ${className}`}>
       <span className="seg" aria-hidden>
         <i />
         <i />
         <i />
       </span>
       {children}
+    </p>
+  );
+}
+
+/** A clause number in the group's book, with a rule running to the edge. */
+function Mark({ n, children, id, as: Tag = "p" }: { n: number; children: React.ReactNode; id?: string; as?: "p" | "h2" }) {
+  return (
+    <Tag id={id} className="section-mark">
+      <b>§&#8239;{n}</b>
+      {children}
     </Tag>
   );
 }
+
+const printedAt = () =>
+  new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC", hour12: false }) + " UTC";
 
 export default async function Home() {
   const stats = await liveStats(demoDao);
   return (
     <main className="immersive min-h-dvh overflow-x-clip">
-      <Spotlight />
       <nav className="pill-nav fixed left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full p-1.5 text-sm" aria-label="Main">
         <a href="#top" className="flex min-h-11 items-center gap-2 rounded-full px-3 font-semibold">
           <Logo size={28} />
@@ -109,15 +121,15 @@ export default async function Home() {
       </nav>
 
       <section id="top" className="grain relative overflow-hidden">
-        <div className="mx-auto grid max-w-6xl content-center items-center gap-2 px-4 pb-6 pt-28 sm:px-6 lg:min-h-[100svh] lg:grid-cols-[1.05fr_1fr] lg:pb-14 lg:pt-16">
+        <div className="mx-auto grid max-w-6xl content-center items-center gap-2 px-4 pb-10 pt-28 sm:px-6 lg:min-h-[100svh] lg:grid-cols-[1.05fr_1fr] lg:pb-20 lg:pt-16">
           <div className="relative z-10">
             <div className="rise" style={{ ["--i" as string]: 0 }}>
               <Eyebrow className="sm:text-sm">Telegram group treasury on NEAR</Eyebrow>
             </div>
-            <h1 className="font-display mt-5 text-[2.6rem] font-semibold leading-[1.02] sm:text-6xl lg:text-7xl">
+            <h1 className="font-display mt-5 text-[2.75rem] font-medium leading-[1] sm:text-6xl lg:text-[5.2rem]">
               {HEADLINE.map((w, i) => (
                 <span key={i} className="rise rise-word mr-[0.22em]" style={{ ["--i" as string]: i + 1 }}>
-                  {w === "nobody" ? <span className="text-gold-sheen">{w}</span> : w}
+                  {w === "nobody" ? <em className="text-gold-sheen pr-[0.04em] italic">{w}</em> : w}
                 </span>
               ))}
             </h1>
@@ -127,10 +139,7 @@ export default async function Home() {
             </p>
             <div className="rise mt-8 flex flex-wrap gap-3" style={{ ["--i" as string]: 8 }}>
               {bot ? (
-                <a
-                  href={`https://t.me/${bot}?startgroup=commons`}
-                  className="btn-gold inline-flex min-h-12 items-center gap-2 rounded-full px-6 font-semibold"
-                >
+                <a href={`https://t.me/${bot}?startgroup=commons`} className="btn-gold inline-flex min-h-12 items-center gap-2 rounded-full px-6 font-semibold">
                   <Icon name="send" size={18} /> Add to a Telegram group
                 </a>
               ) : null}
@@ -158,153 +167,226 @@ export default async function Home() {
         </div>
       </section>
 
-      {stats ? (
-        <section className="border-y border-line bg-[linear-gradient(180deg,rgb(255_170_50/0.04),transparent)]">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-8 sm:px-6 lg:grid-cols-4">
-            {[
-              { k: "Payments made", v: String(stats.paid) },
-              { k: "Approvals needed", v: `${stats.needed} of ${stats.council}` },
-              { k: "Votes cast by the bot", v: String(stats.botVotes) },
-              { k: "In the demo pot", v: stats.holds },
-            ].map((s, i) => (
-              <Reveal key={s.k} delay={i * 80}>
-                <div className="text-xs uppercase tracking-wider text-muted">{s.k}</div>
-                <div className={`font-display mt-1 text-3xl font-semibold tabular-nums ${i === 2 ? "text-gold" : ""}`}>
-                  <CountUp value={s.v} />
-                </div>
-              </Reveal>
-            ))}
-          </div>
-          <p className="mx-auto max-w-6xl px-4 pb-6 text-xs text-muted sm:px-6">
-            Read live from <span className="font-mono">{demoDao}</span> on NEAR testnet.{" "}
-            {stats.botOk ? "The contract gives the bot the proposer role and nothing else." : null}
-          </p>
-        </section>
-      ) : null}
-
-      <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-24 sm:px-6">
-        <Reveal>
-          <Eyebrow>How it works</Eyebrow>
-          <h2 className="font-display mt-3 max-w-2xl text-3xl font-semibold sm:text-4xl">From a chat message to a payment, with the group in charge</h2>
-        </Reveal>
-        <Reveal className="mt-12">
-          <ChatDemo />
-        </Reveal>
-      </section>
-
-      <section id="compare" className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-24 sm:px-6">
-        <Reveal>
-          <Eyebrow>Why it matters</Eyebrow>
-          <h2 className="font-display mt-3 max-w-2xl text-3xl font-semibold sm:text-4xl">Today, one person holds the group&apos;s money</h2>
-          <p className="mt-4 max-w-2xl text-muted">
-            Hackathon prizes are paid in one payment to one account. Event budgets and club funds work the same way. Everyone else trusts that person to pay them back.
-          </p>
-        </Reveal>
-        <Reveal className="mt-10">
-          <div className="card-gold overflow-hidden rounded-3xl">
-            <div className="grid grid-cols-[1fr_1fr] text-xs font-medium uppercase tracking-wider sm:grid-cols-[0.8fr_1fr_1fr]">
-              <div className="hidden px-5 py-4 text-muted sm:block" />
-              <div className="px-5 py-4 text-muted">One wallet</div>
-              <div className="flex items-center gap-2 bg-[linear-gradient(180deg,rgb(251_191_36/0.12),rgb(251_191_36/0.05))] px-5 py-4 text-link">
-                <Logo size={18} /> Commons
+      {/* Below the hero the page is the group's book: a sheet of paper laid on the dark desk. */}
+      <div className="paper sheet tear-bottom mx-1.5 sm:mx-3 lg:mx-5">
+        {stats ? (
+          <section aria-labelledby="books" className="mx-auto grid max-w-6xl items-start gap-12 px-5 pb-16 pt-16 sm:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20 lg:pb-24 lg:pt-24">
+            <Reveal>
+              <Mark n={0}>The books, live</Mark>
+              <h2 id="books" className="font-display mt-6 text-4xl font-medium leading-[1.04] sm:text-6xl">
+                Every payment, <em className="italic">on the record.</em>
+              </h2>
+              <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted">
+                This receipt is printed from the demo group&apos;s DAO on NEAR testnet and refreshed every five minutes. It needs{" "}
+                <span className="marker text-fg">
+                  {stats.needed} of {stats.council} council signatures
+                </span>{" "}
+                to move a coin, and the bot has none to give.
+              </p>
+              <div className="mt-8 flex items-center gap-5">
+                <ArcMeter seats={stats.council} approvals={stats.needed} needed={stats.needed} size={84} className="text-fg" />
+                <p className="max-w-xs text-sm leading-relaxed text-muted">
+                  The mark is the vote meter. Each arc is a council member&apos;s key; when a majority lights up, the pot pays.
+                </p>
               </div>
-            </div>
-            {compare.map((r) => (
-              <div key={r.q} className="grid grid-cols-[1fr_1fr] border-t border-line text-sm sm:grid-cols-[0.8fr_1fr_1fr]">
-                <div className="col-span-2 px-5 pt-4 text-xs font-medium uppercase tracking-wider text-muted sm:col-span-1 sm:py-4 sm:text-sm sm:normal-case sm:tracking-normal sm:text-fg">
-                  {r.q}
-                </div>
-                <div className="flex gap-2 px-5 py-3 text-muted sm:py-4">
-                  <Icon name="x" size={16} className="mt-0.5 shrink-0 text-bad" />
-                  {r.before}
-                </div>
-                <div className="flex gap-2 bg-[rgb(251_191_36/0.05)] px-5 py-3 sm:py-4">
-                  <Icon name="check" size={16} className="mt-0.5 shrink-0 text-link" />
-                  {r.after}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-      </section>
+              <a href={`/c/${demoDao}`} className="mt-8 inline-flex min-h-11 items-center gap-2 font-medium text-link underline decoration-1 underline-offset-4 hover:decoration-2">
+                Open the full ledger <Icon name="external" size={16} />
+              </a>
+            </Reveal>
 
-      <section id="safety" className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-24 sm:px-6">
-        <Reveal>
-          <Eyebrow>Safety</Eyebrow>
-          <h2 className="font-display mt-3 text-3xl font-semibold sm:text-4xl">Why the money is safe</h2>
-        </Reveal>
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          {facts.map((f, i) => (
-            <Reveal key={f.title} delay={i * 100} className="h-full">
-              <div className="spotlight card-gold h-full rounded-3xl p-6">
-                <span className="chip-gold grid size-10 place-items-center rounded-2xl">
-                  <Icon name={f.icon} size={18} />
-                </span>
-                <h3 className="mt-5 font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{f.body}</p>
+            <Reveal className="mx-auto w-full max-w-[360px] lg:mt-6">
+              <div className="printer">
+                <div className="receipt rotate-[1.2deg] px-6 pb-6 pt-7 text-[13px] leading-relaxed">
+                  <div className="text-center">
+                    <div className="font-display text-2xl font-semibold tracking-tight not-italic">Commons</div>
+                    <div className="mt-0.5 text-[11px] uppercase tracking-[0.2em] text-[#5f5548]">Demo pot · NEAR testnet</div>
+                    <div className="mt-2 break-all text-[11px] text-[#5f5548]">{demoDao}</div>
+                  </div>
+                  <div className="my-4 border-t border-dashed border-[#1c1710]/40" />
+                  <dl className="space-y-1.5">
+                    {[
+                      ["Payments made", String(stats.paid)],
+                      ["Approvals needed", `${stats.needed} of ${stats.council}`],
+                      ["Votes cast by the bot", String(stats.botVotes)],
+                    ].map(([k, v]) => (
+                      <div key={k} className="flex items-baseline gap-2">
+                        <dt>{k}</dt>
+                        <span className="dots" aria-hidden />
+                        <dd className="tabular-nums">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div className="my-4 border-t border-dashed border-[#1c1710]/40" />
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-[11px] uppercase tracking-[0.2em]">In the pot</span>
+                    <span className="double-under text-xl font-medium tabular-nums">{stats.holds}</span>
+                  </div>
+                  {stats.botOk ? (
+                    <div className="mt-6 text-center">
+                      <span className="stamp thud text-[12px] text-[#17694a]" style={{ ["--r" as string]: "-6deg", ["--d" as string]: "2.2s" }}>
+                        <Icon name="check" size={14} /> Bot: proposer only
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="barcode mt-6" aria-hidden />
+                  <div className="mt-2 flex flex-wrap justify-between gap-x-3 text-[10.5px] uppercase tracking-[0.14em] text-[#5f5548]">
+                    <span>Read from chain</span>
+                    <span>{printedAt()}</span>
+                  </div>
+                </div>
               </div>
             </Reveal>
-          ))}
-        </div>
-        <Reveal className="mt-12">
-          <div className="rounded-3xl border border-bad/25 bg-[linear-gradient(160deg,rgb(248_113_113/0.07),rgb(255_244_228/0.02)_45%)] p-6 sm:p-8">
-            <div className="flex items-center gap-2 text-sm font-medium text-bad">
-              <Icon name="alert" size={16} /> We attacked our own bot on testnet
-            </div>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-              With the bot&apos;s key in hand we drafted &quot;send everything to the bot&quot;, then tried to approve it and to rewrite the rules. The contract refused both with{" "}
-              <span className="font-mono text-fg">ERR_PERMISSION_DENIED</span>. The pot kept its money.
+          </section>
+        ) : null}
+
+        <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-14 sm:px-8 lg:py-20">
+          <Reveal>
+            <Mark n={1}>How it works</Mark>
+            <h2 className="font-display mt-6 max-w-3xl text-4xl font-medium leading-[1.05] sm:text-5xl">
+              From a chat message to a payment, <em className="italic">with the group in charge.</em>
+            </h2>
+          </Reveal>
+          <Reveal className="mt-12">
+            <ChatDemo />
+          </Reveal>
+        </section>
+
+        <section id="compare" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-14 sm:px-8 lg:py-20">
+          <Reveal>
+            <Mark n={2}>Why it matters</Mark>
+            <h2 className="font-display mt-6 max-w-3xl text-4xl font-medium leading-[1.05] sm:text-5xl">
+              Today, <span className="marker">one person</span> holds the group&apos;s money.
+            </h2>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
+              Hackathon prizes are paid in one payment to one account. Event budgets and club funds work the same way. Everyone else trusts that person to pay them back.
             </p>
-            <ul className="mt-5 grid gap-2 sm:grid-cols-2">
-              {REFUSED.map((r) => (
-                <li key={r.hash}>
-                  <a
-                    href={`${explorer}/txns/${r.hash}`}
-                    className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border border-line px-4 py-3 text-sm transition-colors duration-200 hover:border-bad/60"
-                  >
+          </Reveal>
+          <Reveal className="mt-12">
+            <div className="ledger-lines border-y-2 border-[var(--rule-strong)] bg-[rgb(255_253_248/0.55)]">
+              <div className="hidden grid-cols-[0.8fr_1fr_1fr] border-b border-[var(--rule-strong)] py-3 pl-14 pr-5 font-mono text-[11px] uppercase tracking-[0.16em] text-muted sm:grid">
+                <span>Entry</span>
+                <span>One wallet</span>
+                <span className="flex items-center gap-2 text-fg">
+                  <Logo size={18} /> Commons
+                </span>
+              </div>
+              {compare.map((r, i) => (
+                <div key={r.q} className="grid gap-x-6 gap-y-1.5 border-b border-[var(--rule)] py-4 pl-14 pr-5 last:border-b-0 sm:grid-cols-[0.8fr_1fr_1fr] sm:py-5">
+                  <div className="font-display text-lg italic leading-snug">{r.q}</div>
+                  <div className="flex gap-2.5 text-muted">
+                    <Icon name="x" size={16} className="mt-1 shrink-0 text-bad" />
                     <span>
-                      {r.what}
-                      <span className="mt-0.5 block font-mono text-xs text-muted">{r.hash.slice(0, 10)}… failed</span>
+                      <span className="sr-only">One wallet: </span>
+                      {r.before}
                     </span>
-                    <Icon name="external" size={16} className="shrink-0 text-muted" />
-                  </a>
+                  </div>
+                  <div className="flex gap-2.5">
+                    <Icon name="check" size={16} className="mt-1 shrink-0 text-ok" />
+                    <span>
+                      <span className="sr-only">Commons: </span>
+                      <span className="marker" style={{ ["--d" as string]: `${400 + i * 160}ms` }}>
+                        {r.after}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </section>
+
+        <section id="safety" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-14 sm:px-8 lg:py-20">
+          <Reveal>
+            <Mark n={3}>Safety</Mark>
+            <h2 className="font-display mt-6 text-4xl font-medium leading-[1.05] sm:text-5xl">
+              Why the money is safe<span className="text-link">.</span>
+            </h2>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">Three rules, written into the contract rather than promised by us.</p>
+          </Reveal>
+          <Reveal className="mt-12">
+            <ol className="charter grid bg-[rgb(255_253_248/0.6)] p-3 sm:grid-cols-3">
+              {articles.map((a) => (
+                <li key={a.n} className="border-[var(--rule)] p-6 max-sm:[&:not(:last-child)]:border-b sm:p-8 sm:[&:not(:last-child)]:border-r">
+                  <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">Article</div>
+                  <div className="foil font-display text-6xl font-semibold leading-none">{a.n}</div>
+                  <h3 className="font-display mt-5 text-2xl font-medium">{a.title}</h3>
+                  <p className="mt-3 leading-relaxed text-muted">{a.body}</p>
+                </li>
+              ))}
+            </ol>
+          </Reveal>
+
+          <div className="mt-20 grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr]">
+            <Reveal>
+              <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-bad">
+                <Icon name="alert" size={14} /> Incident report
+              </p>
+              <h3 className="font-display mt-4 text-3xl font-medium leading-tight sm:text-4xl">We attacked our own bot on testnet.</h3>
+              <p className="mt-4 max-w-lg leading-relaxed text-muted">
+                With the bot&apos;s key in hand we drafted &quot;send everything to the bot&quot;, then tried to approve it and to rewrite the rules. The contract refused both with{" "}
+                <span className="font-mono text-[0.9em] text-fg">ERR_PERMISSION_DENIED</span>. The pot kept its money.
+              </p>
+            </Reveal>
+            <Reveal>
+              <ul className="space-y-5">
+                {REFUSED.map((r, i) => (
+                  <li key={r.hash} className={`slip-shadow ${i ? "lg:ml-10 rotate-[0.8deg]" : "rotate-[-1deg]"}`}>
+                    <a href={`${explorer}/txns/${r.hash}`} className="slip group relative block py-5 pl-8 pr-5 transition-transform duration-200 hover:-translate-y-0.5">
+                      <div className="pr-28 sm:pr-36">
+                        <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">Testnet tx · {r.hash.slice(0, 8)}…</div>
+                        <div className="font-display mt-2 text-xl leading-snug">{r.what}</div>
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <span className="font-mono text-xs text-bad">ERR_PERMISSION_DENIED</span>
+                          <span className="inline-flex items-center gap-1 text-sm text-link group-hover:underline">
+                            Explorer <Icon name="external" size={14} />
+                          </span>
+                        </div>
+                      </div>
+                      <span
+                        className="stamp thud absolute right-4 top-1/2 -translate-y-1/2 text-base text-bad sm:right-6 sm:text-lg"
+                        style={{ ["--r" as string]: i ? "-12deg" : "-6deg", ["--d" as string]: `${0.5 + i * 0.35}s` }}
+                        aria-hidden
+                      >
+                        Denied
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-5 pb-24 pt-16 sm:px-8" aria-labelledby="stack">
+          <Reveal>
+            <Mark n={4} as="h2" id="stack">
+              Built on NEAR
+            </Mark>
+          </Reveal>
+          <Reveal className="mt-8">
+            <ul className="max-w-4xl">
+              {stack.map((x) => (
+                <li key={x.name} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-[var(--rule)] py-4">
+                  <span className="font-display text-xl font-medium">{x.name}</span>
+                  <span className="dots hidden sm:block" aria-hidden />
+                  <span className="w-full text-sm text-muted sm:w-auto sm:text-right">{x.what}</span>
                 </li>
               ))}
             </ul>
-          </div>
-        </Reveal>
-      </section>
+          </Reveal>
+        </section>
+      </div>
 
-      <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6" aria-labelledby="stack">
-        <Reveal>
-          <Eyebrow as="h2" id="stack">
-            Built on NEAR
-          </Eyebrow>
-        </Reveal>
-        <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {stack.map((x, i) => (
-            <li key={x.name}>
-              <Reveal delay={i * 60} className="h-full">
-                <div className="spotlight card-gold h-full rounded-2xl px-4 py-4">
-                  <div className="font-display font-semibold">{x.name}</div>
-                  <div className="mt-1 text-xs leading-relaxed text-muted">{x.what}</div>
-                </div>
-              </Reveal>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="grain relative overflow-hidden border-t border-line">
-        <div className="ember pointer-events-none absolute left-1/2 top-6 size-[420px] -translate-x-1/2" aria-hidden />
-        <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-16 text-center sm:px-6">
+      <section className="grain relative overflow-hidden">
+        <div className="ember pointer-events-none absolute left-1/2 top-16 size-[420px] -translate-x-1/2" aria-hidden />
+        <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-24 text-center sm:px-6">
           <Reveal>
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand render */}
             <img src="/brand/mark-512.png" alt="" width={144} height={144} loading="lazy" className="float mx-auto mb-8 size-28 rounded-[30%] shadow-[0_30px_80px_-30px_rgb(255_138_0/0.8)] sm:size-36" />
-            <h2 className="font-display mx-auto max-w-2xl text-3xl font-semibold sm:text-5xl">
-              Try it with <span className="text-gold">your group</span>
+            <h2 className="font-display mx-auto max-w-2xl text-4xl font-medium sm:text-6xl">
+              Try it with <em className="text-gold italic">your group</em>
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-muted">
+            <p className="mx-auto mt-5 max-w-xl text-muted">
               Add the bot to a Telegram group and send <span className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-fg">/commons</span>. It runs on NEAR testnet, so nothing real is at
               stake.
             </p>
