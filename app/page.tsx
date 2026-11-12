@@ -4,6 +4,7 @@ import HeroVault from "@/components/three/HeroVault.tsx";
 import { ArcMeter } from "@/components/ArcMeter.tsx";
 import { Icon } from "@/components/ui.tsx";
 import { Logo } from "@/components/Logo.tsx";
+import { NearMark, NearWordmark } from "@/components/NearLogo.tsx";
 import { PROPOSER_ROLE, botIsProposerOnly, councilOf, votesNeeded } from "@/lib/near/policy.ts";
 import { fmtNear } from "@/lib/pot.ts";
 import { readChain } from "@/lib/server.ts";
@@ -58,13 +59,34 @@ const compare = [
   { q: "Where it happens", before: "A wallet app, a bank, a spreadsheet", after: "The Telegram chat the group already uses" },
 ];
 
-const stack = [
-  { name: "Sputnik DAO v2", what: "holds the money and counts the votes" },
-  { name: "Named accounts", what: "every member is <name>.<sponsor>" },
-  { name: "Keys made on the phone", what: "the server only sees public keys" },
-  { name: "NEAR Intents 1Click", what: "chip in from Base, Arbitrum, Solana, Ethereum, Tron" },
-  { name: "Telegram Mini App", what: "vote where the group already talks" },
+// What Commons is built with. Logos are the projects' own (public/tech, components/NearLogo.tsx); Sputnik DAO has no
+// published logo, so it gets a plain glyph, as does near-api-js, which shares NEAR's.
+type TechLogo = { near: true } | { src: string; inset?: boolean } | { glyph: "vote" | "key" };
+const stack: { name: string; what: string; href: string; logo: TechLogo }[] = [
+  { name: "NEAR Protocol", what: "every member is a named account, <name>.<sponsor>", href: "https://near.org", logo: { near: true } },
+  { name: "Sputnik DAO v2", what: "holds the money and counts the votes", href: "https://github.com/near-daos/sputnik-dao-contract", logo: { glyph: "vote" } },
+  { name: "NEAR Intents · 1Click", what: "chip in from Base, Arbitrum, Solana, Ethereum, Tron", href: "https://near-intents.org", logo: { src: "/tech/near-intents.png" } },
+  { name: "near-api-js", what: "keys made and votes signed on the phone; the server only sees public keys", href: "https://github.com/near/near-api-js", logo: { glyph: "key" } },
+  { name: "FastNEAR RPC", what: "reads the rules, votes and balances for the ledger and the Mini App", href: "https://fastnear.com", logo: { src: "/tech/fastnear.png" } },
+  { name: "NearBlocks", what: "explorer links for every transaction", href: "https://testnet.nearblocks.io", logo: { src: "/tech/nearblocks.png" } },
+  { name: "Telegram Mini App", what: "vote where the group already talks", href: "https://core.telegram.org/bots/webapps", logo: { src: "/tech/telegram.svg", inset: true } },
 ];
+
+/** A logo on a small paper tile, so marks of different shapes and colours sit in one even column. */
+function TechTile({ logo }: { logo: TechLogo }) {
+  return (
+    <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-[var(--rule)] bg-[var(--slip)] text-[#000]" aria-hidden>
+      {"near" in logo ? (
+        <NearMark size={22} />
+      ) : "glyph" in logo ? (
+        <Icon name={logo.glyph} size={20} className="text-fg" />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element -- tiny static logos
+        <img src={logo.src} alt="" width={44} height={44} loading="lazy" className={logo.inset ? "size-6" : "size-full object-cover"} />
+      )}
+    </span>
+  );
+}
 
 const HEADLINE = "Group money nobody has to hold.".split(" ");
 
@@ -149,7 +171,14 @@ export default async function Home() {
                 </a>
               ) : null}
             </div>
-            <ul className="rise mt-10 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted" style={{ ["--i" as string]: 9 }} aria-label="What the scene shows">
+            <a
+              href="https://near.org"
+              className="rise mt-7 inline-flex min-h-11 items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.2em] text-muted transition-colors duration-200 hover:text-fg"
+              style={{ ["--i" as string]: 9 }}
+            >
+              Built on <NearWordmark height={15} className="text-white" />
+            </a>
+            <ul className="rise mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted" style={{ ["--i" as string]: 10 }} aria-label="What the scene shows">
               <li className="flex items-center gap-2">
                 <span className="h-1 w-4 rounded-full bg-gradient-to-r from-amber-200 to-amber-500" /> The council&apos;s keys
               </li>
@@ -362,14 +391,25 @@ export default async function Home() {
             <Mark n={4} as="h2" id="stack">
               Built on NEAR
             </Mark>
+            <div className="mt-8 flex max-w-4xl flex-wrap items-end justify-between gap-x-10 gap-y-5">
+              <a href="https://near.org" className="block text-[#000]" aria-label="NEAR">
+                <NearWordmark height={64} className="h-12 w-auto sm:h-16" />
+              </a>
+              <p className="max-w-sm leading-relaxed text-muted">The money, the rules and every vote live on NEAR. Telegram is only where the group talks.</p>
+            </div>
           </Reveal>
-          <Reveal className="mt-8">
-            <ul className="max-w-4xl">
+          <Reveal className="mt-10">
+            <ul className="max-w-4xl border-t border-[var(--rule-strong)]">
               {stack.map((x) => (
-                <li key={x.name} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-[var(--rule)] py-4">
-                  <span className="font-display text-xl font-medium">{x.name}</span>
-                  <span className="dots hidden sm:block" aria-hidden />
-                  <span className="w-full text-sm text-muted sm:w-auto sm:text-right">{x.what}</span>
+                <li key={x.name} className="flex items-center gap-4 border-b border-[var(--rule)] py-4">
+                  <TechTile logo={x.logo} />
+                  <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                    <a href={x.href} className="font-display text-xl font-medium decoration-1 underline-offset-4 hover:underline">
+                      {x.name}
+                    </a>
+                    <span className="dots hidden sm:block" aria-hidden />
+                    <span className="w-full text-sm text-muted sm:w-auto sm:text-right">{x.what}</span>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -409,8 +449,13 @@ export default async function Home() {
           <span className="flex items-center gap-2">
             <Logo size={24} /> Built for the NEAR Hackathon 2026. Runs on NEAR testnet. MIT license.
           </span>
-          <span className="font-mono">Sputnik DAO · named accounts · NEAR Intents</span>
+          <a href="https://near.org" className="inline-flex min-h-11 items-center gap-2 font-mono transition-colors duration-200 hover:text-fg">
+            Built on <NearWordmark height={13} className="text-white" />
+          </a>
         </div>
+        <p className="mx-auto max-w-6xl px-4 pb-6 text-[11px] text-muted/80 sm:px-6">
+          NEAR, NEAR Intents, FastNEAR, NearBlocks and Telegram names and logos belong to their owners and are shown here only to say what Commons is built with.
+        </p>
       </footer>
     </main>
   );
