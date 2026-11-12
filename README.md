@@ -4,11 +4,11 @@
 
 **Group money nobody has to hold.** A Telegram group treasury on NEAR. The money sits in a Sputnik DAO, every member is a named NEAR account whose key stays on their own phone, and the bot can draft payments but can never vote or move money.
 
-![NEAR testnet](https://img.shields.io/badge/NEAR-testnet-f59e0b) ![Tests](https://img.shields.io/badge/tests-160%20passing-34d399) ![Attacks refused on testnet](https://img.shields.io/badge/bot%20attacks%20refused%20on%20testnet-4%2F4-34d399) ![License MIT](https://img.shields.io/badge/license-MIT-64748b)
+![NEAR testnet](https://img.shields.io/badge/NEAR-testnet-f59e0b) ![Tests](https://img.shields.io/badge/tests-162%20passing-34d399) ![Attacks refused on testnet](https://img.shields.io/badge/bot%20attacks%20refused%20on%20testnet-4%2F4-34d399) ![License MIT](https://img.shields.io/badge/license-MIT-64748b)
 
 NEAR Hackathon 2026 · Tracks: **Social Money**, **Real-World Money** · Solo entry
 
-![Commons landing page: a vault (the group's DAO), member keys around it, the bot on an outer orbit, and three approvals lighting up](docs/img/landing.png)
+![Commons landing page: the logo in 3D. Three gold arcs (the council's keys) close a C around the pot; two arcs light up as approvals, the core pays out through the opening, and the bot circles outside on its own orbit](docs/img/landing.png)
 
 ## For judges
 
@@ -83,7 +83,7 @@ Needs Node 22.6 or newer and npm. Nothing below needs a key, a wallet or a Teleg
 | Command | What it does | Expect |
 |---|---|---|
 | `npm ci` | Installs exact versions | |
-| `npm test` | Unit and end-to-end tests with a fake Telegram and an in-memory Sputnik model | `Tests  160 passed (160)` |
+| `npm test` | Unit and end-to-end tests with a fake Telegram and an in-memory Sputnik model | `Tests  162 passed (162)` |
 | `npm run demo` | The whole story offline: real bot logic, simulated Sputnik rules. Steps 8 to 11 are the attack | 12 steps `PASS`, then `All steps passed.` |
 | `npm run verify` | Reads `testnet-demo-vp4rgk.sputnikv2.testnet` from NEAR and checks the bot can only propose, no role is open to everyone, the bot never voted, every payment has council approvals. Any DAO: `npm run verify -- <dao>` | `All checks passed.` |
 | `npm run smoke` | Checks the live deployment from outside: pages, the ledger and its CSV, the link preview, and that every endpoint refuses unsigned requests | 13 `PASS` lines, `All checks passed.` |

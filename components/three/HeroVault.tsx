@@ -1,21 +1,14 @@
 "use client";
-// Loads the 3D vault only in the browser, after the page is interactive, and only where WebGL exists.
+// Loads the 3D scene only in the browser, after the page is interactive, and only where WebGL exists.
 // Until then (or without WebGL) a static glow keeps the hero from looking empty. A caption under the scene says what
 // the scene is showing right now, so the animation reads as the product's story rather than decoration.
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { BEATS } from "@/lib/heroStory.ts";
 
 const VaultScene = dynamic(() => import("./VaultScene.tsx"), { ssr: false, loading: () => null });
 
-const BEATS: { text: string; tone: "bot" | "ok" | "pay" }[] = [
-  { text: "The bot drafts a payment. That is all it can do.", tone: "bot" },
-  { text: "Approval 1 of 3, signed on a member's own phone", tone: "ok" },
-  { text: "Approval 2 of 3", tone: "ok" },
-  { text: "Approval 3 of 3: a majority of the council", tone: "ok" },
-  { text: "The contract pays the member", tone: "pay" },
-  { text: "The bot never touched the money", tone: "bot" },
-];
-const DOT = { bot: "bg-slate-400", ok: "bg-ok", pay: "bg-primary" };
+const DOT = { bot: "bg-stone-400", ok: "bg-amber-300", pay: "bg-primary shadow-[0_0_10px_2px_rgb(245_158_11/0.7)]" };
 
 function hasWebGL() {
   try {

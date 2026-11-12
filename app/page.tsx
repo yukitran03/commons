@@ -68,6 +68,20 @@ const stack = [
 
 const HEADLINE = "Group money nobody has to hold.".split(" ");
 
+/** Section label with the brand's three-bar marker (the logo's arcs, unrolled). */
+function Eyebrow({ children, id, as: Tag = "p", className = "" }: { children: React.ReactNode; id?: string; as?: "p" | "h2"; className?: string }) {
+  return (
+    <Tag id={id} className={`flex items-center gap-3 text-xs font-medium uppercase tracking-[0.18em] text-link ${className}`}>
+      <span className="seg" aria-hidden>
+        <i />
+        <i />
+        <i />
+      </span>
+      {children}
+    </Tag>
+  );
+}
+
 export default async function Home() {
   const stats = await liveStats(demoDao);
   return (
@@ -97,13 +111,13 @@ export default async function Home() {
       <section id="top" className="grain relative overflow-hidden">
         <div className="mx-auto grid max-w-6xl content-center items-center gap-2 px-4 pb-6 pt-28 sm:px-6 lg:min-h-[100svh] lg:grid-cols-[1.05fr_1fr] lg:pb-14 lg:pt-16">
           <div className="relative z-10">
-            <p className="rise text-sm font-medium uppercase tracking-[0.18em] text-link" style={{ ["--i" as string]: 0 }}>
-              Telegram group treasury on NEAR
-            </p>
+            <div className="rise" style={{ ["--i" as string]: 0 }}>
+              <Eyebrow className="sm:text-sm">Telegram group treasury on NEAR</Eyebrow>
+            </div>
             <h1 className="font-display mt-5 text-[2.6rem] font-semibold leading-[1.02] sm:text-6xl lg:text-7xl">
               {HEADLINE.map((w, i) => (
                 <span key={i} className="rise rise-word mr-[0.22em]" style={{ ["--i" as string]: i + 1 }}>
-                  {w === "nobody" ? <span className="text-primary">{w}</span> : w}
+                  {w === "nobody" ? <span className="text-gold-sheen">{w}</span> : w}
                 </span>
               ))}
             </h1>
@@ -115,26 +129,26 @@ export default async function Home() {
               {bot ? (
                 <a
                   href={`https://t.me/${bot}?startgroup=commons`}
-                  className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-on-primary shadow-[0_0_40px_-8px_rgb(245_158_11/0.7)] transition-transform duration-200 hover:-translate-y-0.5"
+                  className="btn-gold inline-flex min-h-12 items-center gap-2 rounded-full px-6 font-semibold"
                 >
                   <Icon name="send" size={18} /> Add to a Telegram group
                 </a>
               ) : null}
               {demoDao ? (
-                <a href={`/c/${demoDao}`} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-line px-6 font-medium transition-colors duration-200 hover:bg-white/5">
+                <a href={`/c/${demoDao}`} className="btn-ghost inline-flex min-h-12 items-center gap-2 rounded-full px-6 font-medium">
                   See a live ledger <Icon name="external" size={16} />
                 </a>
               ) : null}
             </div>
             <ul className="rise mt-10 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted" style={{ ["--i" as string]: 9 }} aria-label="What the scene shows">
               <li className="flex items-center gap-2">
-                <span className="size-2.5 rotate-45 bg-primary" /> Member keys
+                <span className="h-1 w-4 rounded-full bg-gradient-to-r from-amber-200 to-amber-500" /> The council&apos;s keys
               </li>
               <li className="flex items-center gap-2">
-                <span className="size-2.5 bg-slate-400" /> The bot, proposer only
+                <span className="size-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_2px_rgb(255_138_0/0.6)]" /> The pot
               </li>
               <li className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-ok" /> Approvals
+                <span className="size-2.5 rounded-full bg-gradient-to-br from-stone-200 to-stone-500" /> The bot, proposer only
               </li>
             </ul>
           </div>
@@ -145,7 +159,7 @@ export default async function Home() {
       </section>
 
       {stats ? (
-        <section className="border-y border-line bg-white/[0.02]">
+        <section className="border-y border-line bg-[linear-gradient(180deg,rgb(255_170_50/0.04),transparent)]">
           <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-8 sm:px-6 lg:grid-cols-4">
             {[
               { k: "Payments made", v: String(stats.paid) },
@@ -155,7 +169,7 @@ export default async function Home() {
             ].map((s, i) => (
               <Reveal key={s.k} delay={i * 80}>
                 <div className="text-xs uppercase tracking-wider text-muted">{s.k}</div>
-                <div className="font-display mt-1 text-3xl font-semibold tabular-nums">
+                <div className={`font-display mt-1 text-3xl font-semibold tabular-nums ${i === 2 ? "text-gold" : ""}`}>
                   <CountUp value={s.v} />
                 </div>
               </Reveal>
@@ -170,7 +184,7 @@ export default async function Home() {
 
       <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-24 sm:px-6">
         <Reveal>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-link">How it works</p>
+          <Eyebrow>How it works</Eyebrow>
           <h2 className="font-display mt-3 max-w-2xl text-3xl font-semibold sm:text-4xl">From a chat message to a payment, with the group in charge</h2>
         </Reveal>
         <Reveal className="mt-12">
@@ -180,18 +194,18 @@ export default async function Home() {
 
       <section id="compare" className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-24 sm:px-6">
         <Reveal>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-link">Why it matters</p>
+          <Eyebrow>Why it matters</Eyebrow>
           <h2 className="font-display mt-3 max-w-2xl text-3xl font-semibold sm:text-4xl">Today, one person holds the group&apos;s money</h2>
           <p className="mt-4 max-w-2xl text-muted">
             Hackathon prizes are paid in one payment to one account. Event budgets and club funds work the same way. Everyone else trusts that person to pay them back.
           </p>
         </Reveal>
         <Reveal className="mt-10">
-          <div className="overflow-hidden rounded-3xl border border-line">
+          <div className="card-gold overflow-hidden rounded-3xl">
             <div className="grid grid-cols-[1fr_1fr] text-xs font-medium uppercase tracking-wider sm:grid-cols-[0.8fr_1fr_1fr]">
               <div className="hidden px-5 py-4 text-muted sm:block" />
               <div className="px-5 py-4 text-muted">One wallet</div>
-              <div className="flex items-center gap-2 bg-primary/[0.07] px-5 py-4 text-primary">
+              <div className="flex items-center gap-2 bg-[linear-gradient(180deg,rgb(251_191_36/0.12),rgb(251_191_36/0.05))] px-5 py-4 text-link">
                 <Logo size={18} /> Commons
               </div>
             </div>
@@ -204,8 +218,8 @@ export default async function Home() {
                   <Icon name="x" size={16} className="mt-0.5 shrink-0 text-bad" />
                   {r.before}
                 </div>
-                <div className="flex gap-2 bg-primary/[0.07] px-5 py-3 sm:py-4">
-                  <Icon name="check" size={16} className="mt-0.5 shrink-0 text-ok" />
+                <div className="flex gap-2 bg-[rgb(251_191_36/0.05)] px-5 py-3 sm:py-4">
+                  <Icon name="check" size={16} className="mt-0.5 shrink-0 text-link" />
                   {r.after}
                 </div>
               </div>
@@ -216,14 +230,14 @@ export default async function Home() {
 
       <section id="safety" className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-24 sm:px-6">
         <Reveal>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-link">Safety</p>
+          <Eyebrow>Safety</Eyebrow>
           <h2 className="font-display mt-3 text-3xl font-semibold sm:text-4xl">Why the money is safe</h2>
         </Reveal>
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {facts.map((f, i) => (
             <Reveal key={f.title} delay={i * 100} className="h-full">
-              <div className="spotlight h-full rounded-3xl border border-line bg-card p-6 transition-colors duration-300 hover:border-primary/40">
-                <span className="grid size-10 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <div className="spotlight card-gold h-full rounded-3xl p-6">
+                <span className="chip-gold grid size-10 place-items-center rounded-2xl">
                   <Icon name={f.icon} size={18} />
                 </span>
                 <h3 className="mt-5 font-semibold">{f.title}</h3>
@@ -233,7 +247,7 @@ export default async function Home() {
           ))}
         </div>
         <Reveal className="mt-12">
-          <div className="rounded-3xl border border-line bg-card p-6 sm:p-8">
+          <div className="rounded-3xl border border-bad/25 bg-[linear-gradient(160deg,rgb(248_113_113/0.07),rgb(255_244_228/0.02)_45%)] p-6 sm:p-8">
             <div className="flex items-center gap-2 text-sm font-medium text-bad">
               <Icon name="alert" size={16} /> We attacked our own bot on testnet
             </div>
@@ -263,15 +277,15 @@ export default async function Home() {
 
       <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6" aria-labelledby="stack">
         <Reveal>
-          <h2 id="stack" className="text-xs font-medium uppercase tracking-[0.18em] text-link">
+          <Eyebrow as="h2" id="stack">
             Built on NEAR
-          </h2>
+          </Eyebrow>
         </Reveal>
         <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {stack.map((x, i) => (
             <li key={x.name}>
               <Reveal delay={i * 60} className="h-full">
-                <div className="spotlight h-full rounded-2xl border border-line bg-card px-4 py-4">
+                <div className="spotlight card-gold h-full rounded-2xl px-4 py-4">
                   <div className="font-display font-semibold">{x.name}</div>
                   <div className="mt-1 text-xs leading-relaxed text-muted">{x.what}</div>
                 </div>
@@ -282,20 +296,25 @@ export default async function Home() {
       </section>
 
       <section className="grain relative overflow-hidden border-t border-line">
-        <div className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
+        <div className="ember pointer-events-none absolute left-1/2 top-6 size-[420px] -translate-x-1/2" aria-hidden />
+        <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-16 text-center sm:px-6">
           <Reveal>
-            <h2 className="font-display mx-auto max-w-2xl text-3xl font-semibold sm:text-5xl">Try it with your group</h2>
+            {/* eslint-disable-next-line @next/next/no-img-element -- static brand render */}
+            <img src="/brand/mark-512.png" alt="" width={144} height={144} loading="lazy" className="float mx-auto mb-8 size-28 rounded-[30%] shadow-[0_30px_80px_-30px_rgb(255_138_0/0.8)] sm:size-36" />
+            <h2 className="font-display mx-auto max-w-2xl text-3xl font-semibold sm:text-5xl">
+              Try it with <span className="text-gold">your group</span>
+            </h2>
             <p className="mx-auto mt-4 max-w-xl text-muted">
               Add the bot to a Telegram group and send <span className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-fg">/commons</span>. It runs on NEAR testnet, so nothing real is at
               stake.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               {bot ? (
-                <a href={`https://t.me/${bot}?startgroup=commons`} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-on-primary">
+                <a href={`https://t.me/${bot}?startgroup=commons`} className="btn-gold inline-flex min-h-12 items-center gap-2 rounded-full px-6 font-semibold">
                   <Icon name="send" size={18} /> Add @{bot}
                 </a>
               ) : null}
-              <a href={repo} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-line px-6 font-medium transition-colors duration-200 hover:bg-white/5">
+              <a href={repo} className="btn-ghost inline-flex min-h-12 items-center gap-2 rounded-full px-6 font-medium">
                 Read the code <Icon name="external" size={16} />
               </a>
             </div>
@@ -305,7 +324,9 @@ export default async function Home() {
 
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-muted sm:px-6">
-          <span>Built for the NEAR Hackathon 2026. Runs on NEAR testnet. MIT license.</span>
+          <span className="flex items-center gap-2">
+            <Logo size={24} /> Built for the NEAR Hackathon 2026. Runs on NEAR testnet. MIT license.
+          </span>
           <span className="font-mono">Sputnik DAO · named accounts · NEAR Intents</span>
         </div>
       </footer>
