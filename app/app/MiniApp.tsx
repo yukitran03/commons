@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Account, KeyPair, KeyPairSigner, actions, teraToGas, type KeyPairString } from "near-api-js";
 import { Badge, Card, Icon, Mono, Stat, statusLabel, statusTone } from "@/components/ui.tsx";
+import { Logo } from "@/components/Logo.tsx";
 import { loadKey, saveKey, type KeyPlace } from "@/lib/client/keys.ts";
 import { hasKey, pickJoinKey, waitFor } from "@/lib/client/join.ts";
 import { providerFor } from "@/lib/near/failover.ts";
@@ -146,9 +147,7 @@ export default function MiniApp() {
     <main className={`${inTelegram ? "tg" : ""} min-h-dvh bg-bg px-4 pb-10 pt-4 text-fg`}>
       <div className="stagger mx-auto max-w-md space-y-4">
         <header className="flex items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-on-primary">
-            <Icon name="shield" size={20} />
-          </span>
+          <Logo size={40} />
           <div className="min-w-0">
             <div className="truncate font-semibold">{info?.title ?? "Commons"}</div>
             <div className="truncate text-xs text-muted">{info?.daoId ? <Mono>{info.daoId}</Mono> : "Group treasury on NEAR"}</div>

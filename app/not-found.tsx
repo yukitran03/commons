@@ -1,4 +1,4 @@
-import { Icon } from "@/components/ui.tsx";
+import { Logo } from "@/components/Logo.tsx";
 
 export const metadata = { title: "Not found" };
 
@@ -11,7 +11,7 @@ export default function NotFound() {
         <h1 className="font-display mt-4 text-2xl font-semibold">Nothing here</h1>
         <p className="mt-3 text-muted">This page does not exist, or this account is not a Sputnik DAO on this network.</p>
         <a href="/" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-on-primary">
-          <Icon name="shield" size={18} /> Back to Commons
+          <Logo size={22} /> Back to Commons
         </a>
       </div>
     </main>

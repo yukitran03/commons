@@ -3,6 +3,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Badge, Card, Icon, Mono, statusLabel, statusTone } from "@/components/ui.tsx";
+import { Logo } from "@/components/Logo.tsx";
 import { accountUrl, nearConfig } from "@/lib/near/config.ts";
 import { PROPOSER_ROLE, botIsProposerOnly, councilOf, votesNeeded, type Policy } from "@/lib/near/policy.ts";
 import type { Proposal } from "@/lib/near/chain.ts";
@@ -71,9 +72,7 @@ export default async function Ledger({ params }: { params: Promise<{ dao: string
         <div className="relative mx-auto max-w-4xl px-4 pb-10 pt-5 sm:px-6">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <a href="/" className="flex min-h-11 items-center gap-2 font-semibold">
-              <span className="grid size-8 place-items-center rounded-lg bg-primary text-on-primary">
-                <Icon name="shield" size={18} />
-              </span>
+              <Logo size={32} />
               Commons
             </a>
             <Badge>NEAR {cfg.network}</Badge>

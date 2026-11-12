@@ -4,6 +4,7 @@ import Reveal from "@/components/Reveal.tsx";
 import Spotlight from "@/components/Spotlight.tsx";
 import HeroVault from "@/components/three/HeroVault.tsx";
 import { Icon } from "@/components/ui.tsx";
+import { Logo } from "@/components/Logo.tsx";
 import { PROPOSER_ROLE, botIsProposerOnly, councilOf, votesNeeded } from "@/lib/near/policy.ts";
 import { fmtNear } from "@/lib/pot.ts";
 import { readChain } from "@/lib/server.ts";
@@ -74,9 +75,7 @@ export default async function Home() {
       <Spotlight />
       <nav className="pill-nav fixed left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full p-1.5 text-sm" aria-label="Main">
         <a href="#top" className="flex min-h-11 items-center gap-2 rounded-full px-3 font-semibold">
-          <span className="grid size-6 place-items-center rounded-md bg-primary text-on-primary">
-            <Icon name="shield" size={14} />
-          </span>
+          <Logo size={28} />
           Commons
         </a>
         <a href="#how" className="hidden min-h-11 items-center rounded-full px-3 text-muted transition-colors duration-200 hover:text-fg sm:flex">
@@ -193,7 +192,7 @@ export default async function Home() {
               <div className="hidden px-5 py-4 text-muted sm:block" />
               <div className="px-5 py-4 text-muted">One wallet</div>
               <div className="flex items-center gap-2 bg-primary/[0.07] px-5 py-4 text-primary">
-                <Icon name="shield" size={14} /> Commons
+                <Logo size={18} /> Commons
               </div>
             </div>
             {compare.map((r) => (
