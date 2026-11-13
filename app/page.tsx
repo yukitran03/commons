@@ -453,9 +453,6 @@ export default async function Home() {
             Built on <NearWordmark height={13} className="text-white" />
           </a>
         </div>
-        <p className="mx-auto max-w-6xl px-4 pb-6 text-[11px] text-muted/80 sm:px-6">
-          NEAR, NEAR Intents, FastNEAR, NearBlocks and Telegram names and logos belong to their owners and are shown here only to say what Commons is built with.
-        </p>
       </footer>
     </main>
   );
