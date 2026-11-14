@@ -58,6 +58,7 @@ sequenceDiagram
 | A bot that holds the group wallet | The bot's operator (or whoever steals its key) can move the money. Commons' bot cannot: the contract refuses its votes. |
 | A multisig app (Sputnik UIs, Trezu, Safe) | The same contract kind, but in a separate app where every member first needs a wallet. Commons puts it in the chat the group already uses and creates each member's account in one tap. |
 | A splitting app | Tracks who owes whom. It does not hold the money or enforce a vote. |
+| A savings-circle contract (ajo, susu, hụi) | Pays a fixed rotation: everyone puts in the same amount and takes the pot in turn. It does not let a group decide together what to spend its money on. |
 
 Commons does not build a new multisig. It is the group-chat layer on top of Sputnik DAO, the contract Trezu builds on.
 
@@ -181,7 +182,7 @@ Postgres (Neon in production, PGlite locally) only maps Telegram chats and users
 - Written during the hackathon window. The repository was started on 2026-11-08, after the 2026-10-19 announcement; there is no earlier code.
 - Most of the code was written with Claude Code (Anthropic) from a written plan ([`docs/superpowers/plans/2026-11-08-commons.md`](docs/superpowers/plans/2026-11-08-commons.md)) and reviewed by the author.
 - Patterns (a fetch-based Telegram client, a Neon/PGlite SQL adapter, a fake-Telegram test harness) follow the author's earlier project Pocket Pundit; no code was copied.
-- Libraries: next, react, three, @react-three/fiber, near-api-js, @neondatabase/serverless, @electric-sql/pglite, tailwindcss, vitest. Fonts: IBM Plex and Space Grotesk via next/font.
+- Libraries: next, react, three, @react-three/fiber, near-api-js, @neondatabase/serverless, @electric-sql/pglite, tailwindcss, vitest. Fonts: IBM Plex and Fraunces via next/font. The NEAR, NEAR Intents, FastNEAR, NearBlocks and Telegram logos on the landing page come from each project's own site or GitHub organisation.
 - Uses NEAR's public testnet faucet helper, FastNEAR RPC, nearblocks.io links and the NEAR Intents 1Click API.
 
 ## License
