@@ -14,6 +14,7 @@ NEAR Hackathon 2026 · Tracks: **Social Money**, **Real-World Money** · Solo en
 
 | | |
 |---|---|
+| **Watch** | [1:48 demo video](https://youtu.be/lSkY-elefDo): join, the treasury's rules, `/spend`, a vote, the bot's refused transactions, the public ledger |
 | **Try it** | Live site https://commons-near.vercel.app · Telegram bot [@commons_near_bot](https://t.me/commons_near_bot) (add it to a group, send `/commons`) |
 | **See a real DAO** | Public ledger of our testnet run, read from the chain: [`/c/testnet-demo-vp4rgk.sputnikv2.testnet`](https://commons-near.vercel.app/c/testnet-demo-vp4rgk.sputnikv2.testnet) · [CSV](https://commons-near.vercel.app/c/testnet-demo-vp4rgk.sputnikv2.testnet/csv) |
 | **Check it in 2 minutes** | `npm ci && npm test && npm run demo && npm run verify` · no keys, no wallet, no Telegram account ([expected output](#check-it-yourself)) |
