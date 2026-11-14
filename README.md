@@ -4,7 +4,7 @@
 
 **Group money nobody has to hold.** A Telegram group treasury on NEAR. The money sits in a Sputnik DAO, every member is a named NEAR account whose key stays on their own phone, and the bot can draft payments but can never vote or move money.
 
-![NEAR testnet](https://img.shields.io/badge/NEAR-testnet-f59e0b) ![Tests](https://img.shields.io/badge/tests-170%20passing-34d399) ![Bot transactions refused on testnet](https://img.shields.io/badge/bot%20transactions%20refused%20on%20testnet-4%2F4-34d399) ![License MIT](https://img.shields.io/badge/license-MIT-64748b)
+![NEAR testnet](https://img.shields.io/badge/NEAR-testnet-f59e0b) ![CI](https://github.com/yukitran03/commons/actions/workflows/ci.yml/badge.svg) ![Tests](https://img.shields.io/badge/tests-170%20passing-34d399) ![Bot transactions refused on testnet](https://img.shields.io/badge/bot%20transactions%20refused%20on%20testnet-4%2F4-34d399) ![License MIT](https://img.shields.io/badge/license-MIT-64748b)
 
 NEAR Hackathon 2026 · Tracks: **Social Money**, **Real-World Money** · Solo entry
 
