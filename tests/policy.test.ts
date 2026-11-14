@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { botIsProposerOnly, buildPolicy, canAct, councilOf, votesNeeded, type Policy } from "../lib/near/policy.ts";
+import { botIsProposerOnly, buildPolicy, canAct, councilOf, effectiveStatus, votesNeeded, type Policy } from "../lib/near/policy.ts";
 
 const BOT = "bot.testnet";
 const make = (council: string[]) => buildPolicy({ council, bot: BOT, bondYocto: "10000000000000000000000" });
@@ -88,5 +88,20 @@ describe("Member roles (token-weighted, match any account)", () => {
     const p = make(["a.testnet"]);
     const open: Policy = { ...p, roles: [...p.roles, { name: "holders", kind: { Member: "0" }, permissions: ["*:VoteApprove"], vote_policy: {} }] };
     expect(canAct(open, "anyone.testnet", "transfer", "VoteApprove")).toBe(true);
+  });
+});
+
+describe("effectiveStatus", () => {
+  const WEEK = "604800000000000";
+  const at = (ms: number) => String(BigInt(ms) * 1_000_000n);
+  const sub = Date.UTC(2026, 10, 10, 8, 35);
+  it("keeps an open proposal open inside its voting period", () => {
+    expect(effectiveStatus({ status: "InProgress", submission_time: at(sub) }, WEEK, sub + 6 * 86_400_000)).toBe("InProgress");
+  });
+  it("shows an open proposal as expired once its voting period is over", () => {
+    expect(effectiveStatus({ status: "InProgress", submission_time: at(sub) }, WEEK, sub + 7 * 86_400_000)).toBe("Expired");
+  });
+  it("never changes a status the chain already settled", () => {
+    expect(effectiveStatus({ status: "Approved", submission_time: at(sub) }, WEEK, sub + 30 * 86_400_000)).toBe("Approved");
   });
 });

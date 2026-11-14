@@ -4,7 +4,7 @@
 
 **Group money nobody has to hold.** A Telegram group treasury on NEAR. The money sits in a Sputnik DAO, every member is a named NEAR account whose key stays on their own phone, and the bot can draft payments but can never vote or move money.
 
-![NEAR testnet](https://img.shields.io/badge/NEAR-testnet-f59e0b) ![Tests](https://img.shields.io/badge/tests-167%20passing-34d399) ![Attacks refused on testnet](https://img.shields.io/badge/bot%20attacks%20refused%20on%20testnet-4%2F4-34d399) ![License MIT](https://img.shields.io/badge/license-MIT-64748b)
+![NEAR testnet](https://img.shields.io/badge/NEAR-testnet-f59e0b) ![Tests](https://img.shields.io/badge/tests-170%20passing-34d399) ![Bot transactions refused on testnet](https://img.shields.io/badge/bot%20transactions%20refused%20on%20testnet-4%2F4-34d399) ![License MIT](https://img.shields.io/badge/license-MIT-64748b)
 
 NEAR Hackathon 2026 · Tracks: **Social Money**, **Real-World Money** · Solo entry
 
@@ -20,7 +20,7 @@ NEAR Hackathon 2026 · Tracks: **Social Money**, **Real-World Money** · Solo en
 | **Check it in 2 minutes** | `npm ci && npm test && npm run demo && npm run verify` · no keys, no wallet, no Telegram account ([expected output](#check-it-yourself)) |
 | **Proof on chain** | The contract refused the bot's own vote ([tx 768dnS…](https://testnet.nearblocks.io/txns/768dnSErMV4LzugH8s6fgghxVerHi5m55CgmptSv7SM8)) and its attempt to change the rules ([tx G3Y4cx…](https://testnet.nearblocks.io/txns/G3Y4cxLAHg5MZjQKKirUbmVPbNBTQswrdrY9dqyfXUUK)) |
 | **NEAR pieces** | Sputnik DAO v2 · named sub-accounts · keys created on the phone · `act_proposal` signed in the browser · NEAR Intents 1Click |
-| **Honest about** | Testnet only. Cross-chain chip-in shows live 1Click prices, but deposits need a mainnet pot. No meta transactions. [Limits](#honest-limits) |
+| **Honest about** | Testnet only. No real group has used it yet; the linked DAO comes from the scripted testnet run. Cross-chain chip-in shows live 1Click prices only: the deposit step is not built. No meta transactions. [Limits](#honest-limits) |
 
 ## The problem
 
@@ -30,11 +30,11 @@ A team's shared money (prize money, an event budget, a club fund) lands in one p
 
 ![The /spend message, the payment card and the Mini App vote screen, as shown on the landing page](docs/img/chat-demo.jpg)
 
-1. **Join.** Someone sends `/commons` in the group. Each member taps **Join** and gets a NEAR account such as `huc.commons.testnet`. The key is generated on their phone and never leaves it.
+1. **Join.** Someone sends `/commons` in the group. Each member taps **Join** and gets a NEAR account under the sponsor account, such as `alice_cm-7001.commons-spike-mw75h7o0.testnet`. The key is generated on their phone and never leaves it.
 2. **Create the treasury.** A founder taps **Create treasury**. Commons deploys a Sputnik DAO with the founders as council and the bot in a `proposer` role that holds exactly `transfer:AddProposal` and `add_member_to_role:AddProposal`.
 3. **Ask in one line.** `/spend 25 NEAR @huc monitor for demo day`. The bot files a Transfer proposal and posts a card.
 4. **Approve on your own phone.** "Review and vote" opens the Mini App, which shows what the contract will do (read from the chain, not from the bot's text) and signs `act_proposal` with the member's key. When a majority approves, Sputnik pays out by itself and the bot posts the result.
-5. **Anyone can check.** The public ledger and `npm run verify` read rules, votes and payments straight from NEAR. Members can also chip in USDC or USDT from Base, Arbitrum, Solana, Ethereum or Tron through NEAR Intents (live quotes; deposits on mainnet).
+5. **Anyone can check.** The public ledger and `npm run verify` read rules, votes and payments straight from NEAR. Members chip in NEAR from their own account. For USDC or USDT on Base, Arbitrum, Solana, Ethereum or Tron, the Mini App shows a live NEAR Intents 1Click price; the deposit step itself is not built yet (see [Not implemented](#not-implemented)).
 
 ```mermaid
 sequenceDiagram
@@ -67,8 +67,8 @@ Commons does not build a new multisig. It is the group-chat layer on top of Sput
 
 | Attack | What stops it | Proof |
 |---|---|---|
-| Someone with the bot's key approves "send everything to the bot" | DAO role `proposer` has no vote permission | `ERR_PERMISSION_DENIED` on testnet: [768dnS…](https://testnet.nearblocks.io/txns/768dnSErMV4LzugH8s6fgghxVerHi5m55CgmptSv7SM8), [6LrRnX…](https://testnet.nearblocks.io/txns/6LrRnXMJdzNz6t4bjGqPVCMX7KkqJtMwt363w3jsQ8AS); `npm run demo` step 9 |
-| Someone with the bot's key rewrites the DAO's rules | No `policy:AddProposal` for the bot | `ERR_PERMISSION_DENIED` on testnet: [G3Y4cx…](https://testnet.nearblocks.io/txns/G3Y4cxLAHg5MZjQKKirUbmVPbNBTQswrdrY9dqyfXUUK), [EB2k3S…](https://testnet.nearblocks.io/txns/EB2k3Snhmq8tEWsNw16xNvJc1Mi24p9tPRjDNL2GS2Eu); `npm run demo` step 10 |
+| Someone with the bot's key votes to approve a payment (in the demo DAO, its own "send everything to the bot") | DAO role `proposer` has no vote permission | `ERR_PERMISSION_DENIED` on testnet: [768dnS…](https://testnet.nearblocks.io/txns/768dnSErMV4LzugH8s6fgghxVerHi5m55CgmptSv7SM8) (demo DAO `testnet-demo-vp4rgk`, 2026-11-10), [6LrRnX…](https://testnet.nearblocks.io/txns/6LrRnXMJdzNz6t4bjGqPVCMX7KkqJtMwt363w3jsQ8AS) (first test DAO `cm-mw75i7gq`, 2026-11-08); `npm run demo` step 9 |
+| Someone with the bot's key rewrites the DAO's rules | No `policy:AddProposal` for the bot | `ERR_PERMISSION_DENIED` on testnet: [G3Y4cx…](https://testnet.nearblocks.io/txns/G3Y4cxLAHg5MZjQKKirUbmVPbNBTQswrdrY9dqyfXUUK) (demo DAO, 2026-11-10), [EB2k3S…](https://testnet.nearblocks.io/txns/EB2k3Snhmq8tEWsNw16xNvJc1Mi24p9tPRjDNL2GS2Eu) (first test DAO, 2026-11-08); `npm run demo` step 10 |
 | A council member disguises a policy change as "add Carol" | The vote screen is built from the proposal's kind on chain, never from its description | `tests/proposalView.test.ts` |
 | A forged Mini App request | Telegram `initData` HMAC check | `tests/tgauth.test.ts`; `npm run smoke` against production |
 | A fake Telegram webhook | Secret token, compared in constant time | `npm run smoke` against production |
@@ -85,9 +85,9 @@ Needs Node 22.6 or newer and npm. Nothing below needs a key, a wallet or a Teleg
 | Command | What it does | Expect |
 |---|---|---|
 | `npm ci` | Installs exact versions | |
-| `npm test` | Unit and end-to-end tests with a fake Telegram and an in-memory Sputnik model | `Tests  167 passed (167)` |
+| `npm test` | Unit and end-to-end tests with a fake Telegram and an in-memory Sputnik model | `Tests  170 passed (170)` |
 | `npm run demo` | The whole story offline: real bot logic, simulated Sputnik rules. Steps 8 to 11 are the attack | 12 steps `PASS`, then `All steps passed.` |
-| `npm run verify` | Reads `testnet-demo-vp4rgk.sputnikv2.testnet` from NEAR and checks the bot can only propose, no role is open to everyone, the bot never voted, every payment has council approvals. Any DAO: `npm run verify -- <dao>` | `All checks passed.` |
+| `npm run verify` | Reads `testnet-demo-vp4rgk.sputnikv2.testnet` from NEAR and checks the DAO runs the factory's unmodified Sputnik DAO v2 code (same code hash), the bot can only propose, no role is open to everyone, the bot never voted, every payment has council approvals. Any DAO: `npm run verify -- <dao>`. Needs network; without it, it says so and exits 3 | 6 `PASS` lines, `All checks passed.` |
 | `npm run smoke` | Checks the live deployment from outside: pages, the ledger and its CSV, the link preview, and that every endpoint refuses unsigned requests | 13 `PASS` lines, `All checks passed.` |
 | `npm run quote -- arb-usdc 10` | One dry-run NEAR Intents 1Click quote for a cross-chain chip-in | `The pot would receive 9.99… USDC …`, or `No quote: <reason>` when 1Click is slow |
 | `npm run demo:testnet` | The same story on NEAR testnet with brand-new accounts; writes [`docs/demo-run.log`](docs/demo-run.log) | 12 of 12 steps. Uses the public faucet once; on HTTP 429 set `SPONSOR_ACCOUNT_ID`/`SPONSOR_PRIVATE_KEY` to a testnet account with about 9 NEAR |
@@ -121,7 +121,7 @@ The full transcript of our testnet run, with explorer links for every account, v
 | Member keys never reach the server | `/api/join` takes `publicKey` only | [`app/api/join/route.ts`](app/api/join/route.ts) has no field for a private key |
 | New members are voted in, nobody is left out | `ensureVotedIn` in [`lib/pot.ts`](lib/pot.ts) files exactly one `AddMemberToRole` for anyone not on the council | `tests/e2e-bot.test.ts` "a late joiner is pending until the council votes them in", "someone who joins while the treasury is being created is not left out" |
 | Mini App requests are authenticated | `verifyInitData` (Telegram's HMAC scheme) | `tests/tgauth.test.ts` "rejects forged and stale initData" |
-| Results posted in the group come from the chain | `refreshProposal`, `waitForVote` in [`lib/pot.ts`](lib/pot.ts) | `tests/e2e-bot.test.ts` "vote notify trusts the chain only" |
+| Statuses and approvers posted in the group come from the chain (amount and reason come from the bot's record of the request) | `refreshProposal`, `waitForVote` in [`lib/pot.ts`](lib/pot.ts) | `tests/e2e-bot.test.ts` "vote notify trusts the chain only" |
 | The webhook only accepts Telegram | Secret token check in [`app/api/telegram/route.ts`](app/api/telegram/route.ts) | `npm run smoke` |
 | The ledger export is safe to open in a spreadsheet | `csvCell` in [`lib/ledgerCsv.ts`](lib/ledgerCsv.ts) | `tests/ledgerCsv.test.ts` |
 
@@ -163,7 +163,7 @@ Postgres (Neon in production, PGlite locally) only maps Telegram chats and users
 ## Honest limits
 
 - **Testnet.** Everything runs on NEAR testnet. Testnet pots hold NEAR only; USDC spending is wired for mainnet but has not been run there.
-- **NEAR Intents is mainnet only.** A testnet pot shows a live 1Click price but never a deposit address. Testnet quotes are priced to the mainnet account `sputnik-dao.near` as a stand-in (the price does not depend on the recipient). Live deposits need a mainnet pot, `INTENTS_LIVE=1` and the member's own refund address. The public 1Click endpoint is sometimes slow: on 2026-11-10 it answered for all six sources at once; on 2026-11-11 some sources first hit 1Click's own 25-second timeout and answered on a later try. The Mini App then shows "No quote right now" with 1Click's reason. A partner JWT (`ONECLICK_JWT`) helps.
+- **NEAR Intents is mainnet only.** A testnet pot shows a live 1Click price but never a deposit address. Testnet quotes are priced to the mainnet account `sputnik-dao.near` as a stand-in (the price does not depend on the recipient). The quote route can ask 1Click for a live deposit address when the pot is on mainnet, `INTENTS_LIVE=1` and the member gives a refund address, but the Mini App does not collect a refund address or show a deposit address yet, and no live deposit has been made. The public 1Click endpoint is sometimes slow: on 2026-11-10 it answered for all six sources at once; on 2026-11-11 some sources first hit 1Click's own 25-second timeout and answered on a later try. The Mini App then shows "No quote right now" with 1Click's reason. A partner JWT (`ONECLICK_JWT`) helps.
 - **Cost per group.** A Sputnik DAO locks about 5.5 NEAR of storage, paid by the sponsor, and each member account gets 0.5 NEAR for fees. There is no rate limit beyond one account per user per group yet.
 - **Lost phone.** The key lives on the phone (Telegram SecureStorage on clients with Bot API 9.0+, otherwise localStorage). The Mini App can show the key for backup. If it is lost, the council can remove the member with a `RemoveMemberFromRole` proposal in any Sputnik UI; the bot does not offer that yet.
 - **Trusting the web app.** The bot key alone cannot move money. But the same server serves the Mini App's code, so someone who took over the whole deployment could ship code that reads keys from the phone. The Mini App checks on chain that each new account holds the key the phone created, which stops a server from slipping in its own key at join time. Signing with an existing wallet (not implemented) would remove this trust.
@@ -172,7 +172,7 @@ Postgres (Neon in production, PGlite locally) only maps Telegram chats and users
 ## Not implemented
 
 - Removing members or changing the threshold from Telegram (possible in any Sputnik UI).
-- Storage registration for USDC on mainnet DAOs before the first cross-chain chip-in.
+- The cross-chain deposit step in the Mini App: asking for a refund address, showing the 1Click deposit address and following the deposit (`chipInStatus` in [`lib/intents.ts`](lib/intents.ts) is written and tested but not wired in). Storage registration for USDC on mainnet DAOs before the first cross-chain chip-in.
 - Signing in with an existing NEAR wallet (NEAR Connect) instead of a key created in the Mini App.
 - Gasless votes through meta transactions; members get 0.5 NEAR for gas instead.
 - Reminders for members who have not voted yet.

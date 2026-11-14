@@ -10,6 +10,7 @@ import { loadKey, saveKey, type KeyPlace } from "@/lib/client/keys.ts";
 import { hasKey, pickJoinKey, waitFor } from "@/lib/client/join.ts";
 import { providerFor } from "@/lib/near/failover.ts";
 import { viewKind } from "@/lib/proposalView.ts";
+import { effectiveStatus } from "@/lib/near/policy.ts";
 import { parsePayload, type Payload } from "@/lib/telegram.ts";
 import { fromUnits, toUnits } from "@/lib/tokens.ts";
 import { SOURCES } from "@/lib/intents.ts";
@@ -336,6 +337,8 @@ const roleText = (r: string) => (r === "council" ? "Council member: you vote on 
 
 function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
   const [p, setP] = useState<Proposal | null | undefined>(undefined);
+  // The DAO's voting period, to show a proposal whose time ran out as expired (Sputnik records that lazily).
+  const [period, setPeriod] = useState<string | null>(null);
   const [busy, setBusy] = useState<"VoteApprove" | "VoteReject" | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [tx, setTx] = useState<string | null>(null);
@@ -343,7 +346,12 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
   const load = useCallback(async () => {
     if (!info.daoId) return setP(null);
     try {
-      setP(await viewCall<Proposal>(info, info.daoId, "get_proposal", { id }));
+      const [prop, pol] = await Promise.all([
+        viewCall<Proposal>(info, info.daoId, "get_proposal", { id }),
+        viewCall<{ proposal_period: string }>(info, info.daoId, "get_policy", {}).catch(() => null),
+      ]);
+      setPeriod(pol?.proposal_period ?? null);
+      setP(prop);
     } catch {
       setP(null);
     }
@@ -390,9 +398,10 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
   const view = viewKind(p.kind as Record<string, unknown>);
   const mine = info.me ? p.votes[info.me.accountId] : undefined;
   const onCouncil = !!info.me && council.includes(info.me.accountId);
-  const canVote = onCouncil && p.status === "InProgress" && !mine && view.votable;
+  const status = period ? effectiveStatus(p, period) : p.status;
+  const canVote = onCouncil && status === "InProgress" && !mine && view.votable;
 
-  const ink = p.status === "Approved" ? "text-ok" : p.status === "InProgress" ? "text-pend" : "text-bad";
+  const ink = status === "Approved" ? "text-ok" : status === "InProgress" ? "text-pend" : "text-bad";
   // One signature line per approval still needed, after the ones already given.
   const open = Math.max(0, needed - approvals.length);
 
@@ -403,7 +412,7 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
           {view.label} #{p.id}
         </span>
         <span className={`stamp text-[11px] ${ink}`} style={{ ["--r" as string]: "-4deg" }}>
-          {statusLabel(p.status, view.transfer)}
+          {statusLabel(status, view.transfer)}
         </span>
       </div>
       <div className="flex items-center justify-between gap-4">
@@ -450,7 +459,7 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
               <span className="mb-0.5 ml-auto shrink-0 font-mono text-xs text-muted">{v === "Approve" ? "approved" : "rejected"}</span>
             </li>
           ))}
-          {p.status === "InProgress"
+          {status === "InProgress"
             ? Array.from({ length: open }, (_, i) => (
                 <li key={`open-${i}`} className="flex min-h-8 items-end gap-2 border-b border-dashed border-line pb-1 text-xs text-muted">
                   Signature needed
@@ -467,8 +476,8 @@ function Vote({ info, auth, id }: { info: PotInfo; auth: Auth; id: number }) {
         </Notice>
       ) : null}
       {mine ? <Notice tone="info">You voted {mine === "Approve" ? "to approve" : "to reject"}.</Notice> : null}
-      {!info.me && p.status === "InProgress" ? <Notice tone="info">Only council members can vote. Join the pot first.</Notice> : null}
-      {info.me && !onCouncil && p.status === "InProgress" ? <Notice tone="info">{roleText(info.me.role === "council" ? "pending" : info.me.role)}.</Notice> : null}
+      {!info.me && status === "InProgress" ? <Notice tone="info">Only council members can vote. Join the pot first.</Notice> : null}
+      {info.me && !onCouncil && status === "InProgress" ? <Notice tone="info">{roleText(info.me.role === "council" ? "pending" : info.me.role)}.</Notice> : null}
 
       {canVote ? (
         <div className="grid grid-cols-2 gap-3">

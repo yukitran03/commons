@@ -76,6 +76,16 @@ export function councilOf(policy: Policy): string[] {
   return r && typeof r.kind === "object" && "Group" in r.kind ? [...r.kind.Group] : [];
 }
 
+/**
+ * A proposal's status as people should read it. Sputnik keeps a proposal "InProgress" after its voting period ends,
+ * until the next action on it records "Expired"; by then it can no longer pass, so show it as expired.
+ */
+export function effectiveStatus(p: { status: string; submission_time: string }, proposalPeriodNs: string, nowMs: number = Date.now()): string {
+  if (p.status !== "InProgress") return p.status;
+  const ends = BigInt(p.submission_time) + BigInt(proposalPeriodNs);
+  return ends <= BigInt(Math.floor(nowMs)) * 1_000_000n ? "Expired" : p.status;
+}
+
 /** Sputnik's RoleWeight threshold for a ratio [n, d] over a group of size s: min(floor(s*n/d) + 1, s). */
 export function votesNeeded(policy: Policy): number {
   const s = councilOf(policy).length;

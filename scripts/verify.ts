@@ -2,7 +2,8 @@
 //   1. the bot role can only propose transfers and new members (no votes, no finalize, no policy changes),
 //   2. no role is open to Everyone or to token holders (Member roles),
 //   3. the bot never voted,
-//   4. every paid transfer carries council approvals.
+//   4. every paid transfer carries council approvals,
+//   5. the DAO runs the factory's own Sputnik DAO v2 code (same code hash), not a modified contract.
 // Defaults to the DAO recorded in docs/demo-run.log.
 import { readFileSync } from "node:fs";
 import { RpcChain } from "../lib/near/rpcChain.ts";
@@ -30,8 +31,30 @@ const row = (ok: boolean | "warn", what: string, detail = "") => {
 };
 
 console.log(`Verifying ${dao} on NEAR ${cfg.network} (${cfg.rpcUrl})\n`);
-const policy = await chain.getPolicy(dao);
-const proposals = await chain.getProposals(dao);
+
+/** One JSON-RPC query against the configured node. */
+async function rpcQuery<T>(params: Record<string, unknown>): Promise<T> {
+  const r = await fetch(cfg.rpcUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { finality: "final", ...params } }),
+  });
+  const j = (await r.json()) as { result?: T & { error?: string }; error?: unknown };
+  if (!j.result || j.result.error) throw new Error(JSON.stringify(j.error ?? j.result?.error));
+  return j.result;
+}
+
+let policy: Awaited<ReturnType<typeof chain.getPolicy>>;
+let proposals: Awaited<ReturnType<typeof chain.getProposals>>;
+try {
+  [policy, proposals] = await Promise.all([chain.getPolicy(dao), chain.getProposals(dao)]);
+} catch (e) {
+  console.error(`Could not read ${dao} from NEAR ${cfg.network}: ${(e as Error).message.slice(0, 160)}`);
+  console.error("This check reads the live chain, so it needs network access. npm test and npm run demo run offline.");
+  // Let open sockets close before exiting (an immediate exit can trip a libuv assertion on Windows).
+  await new Promise((r) => setTimeout(r, 300));
+  process.exit(3);
+}
 const council = councilOf(policy);
 const needed = votesNeeded(policy);
 // Check whoever holds the proposer role, plus the bot this deployment uses (BOT_ACCOUNT_ID), wherever it sits.
@@ -45,6 +68,19 @@ console.log(`council (${council.length}): ${council.join(", ")}`);
 console.log(`approvals needed: ${needed} of ${council.length}`);
 console.log(`bot role "${PROPOSER_ROLE}": ${bots.join(", ") || "none"}`);
 console.log(`spendable balance: ${fromUnits(await chain.balance(dao), 24)} NEAR, proposals: ${proposals.length}\n`);
+
+// The DAO's code must be the factory's default Sputnik DAO v2 build. A newer factory default is a warning, not a failure.
+try {
+  const [{ code_hash }, def] = await Promise.all([
+    rpcQuery<{ code_hash: string }>({ request_type: "view_account", account_id: dao }),
+    rpcQuery<{ result: number[] }>({ request_type: "call_function", account_id: cfg.factory, method_name: "get_default_code_hash", args_base64: "e30=" }),
+  ]);
+  const factoryHash = JSON.parse(Buffer.from(def.result).toString("utf8")) as string;
+  const same = code_hash === factoryHash;
+  row(same ? true : "warn", `the DAO runs ${cfg.factory}'s Sputnik DAO v2 code`, `code hash ${code_hash}${same ? "" : `, factory default is now ${factoryHash}`}`);
+} catch (e) {
+  row("warn", "could not compare the DAO's code hash with the factory's", (e as Error).message.slice(0, 120));
+}
 
 row(bots.length > 0, "a proposer role for the bot exists");
 for (const b of bots) {

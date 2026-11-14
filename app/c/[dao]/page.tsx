@@ -7,7 +7,7 @@ import { ArcMeter } from "@/components/ArcMeter.tsx";
 import { Icon, Mono, statusLabel } from "@/components/ui.tsx";
 import { Logo } from "@/components/Logo.tsx";
 import { accountUrl, nearConfig } from "@/lib/near/config.ts";
-import { PROPOSER_ROLE, botIsProposerOnly, councilOf, votesNeeded, type Policy } from "@/lib/near/policy.ts";
+import { PROPOSER_ROLE, botIsProposerOnly, councilOf, effectiveStatus, votesNeeded, type Policy } from "@/lib/near/policy.ts";
 import type { Proposal } from "@/lib/near/chain.ts";
 import { fmtNear } from "@/lib/pot.ts";
 import { viewKind } from "@/lib/proposalView.ts";
@@ -22,11 +22,15 @@ export async function generateMetadata({ params }: { params: Promise<{ dao: stri
   return { title: `Ledger · ${dao}`, description: `Rules, votes and payments of ${dao}, read from NEAR.` };
 }
 
+/** Accounts that hold the proposer role in this DAO. */
+function proposersOf(policy: Policy): string[] {
+  const r = policy.roles.find((x) => x.name === PROPOSER_ROLE);
+  return r && typeof r.kind === "object" && "Group" in r.kind ? [...r.kind.Group] : [];
+}
+
 /** Accounts checked as "the bot": whoever holds the proposer role, plus this deployment's configured bot account. */
 function botsOf(policy: Policy): string[] {
-  const r = policy.roles.find((x) => x.name === PROPOSER_ROLE);
-  const inRole = r && typeof r.kind === "object" && "Group" in r.kind ? r.kind.Group : [];
-  return [...new Set([...inRole, ...(process.env.BOT_ACCOUNT_ID ? [process.env.BOT_ACCOUNT_ID] : [])])];
+  return [...new Set([...proposersOf(policy), ...(process.env.BOT_ACCOUNT_ID ? [process.env.BOT_ACCOUNT_ID] : [])])];
 }
 
 function describe(p: Proposal): { title: string; detail: string | null; transfer: boolean } {
@@ -68,6 +72,8 @@ export default async function Ledger({ params }: { params: Promise<{ dao: string
   const readAt = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
   const checksOk = checks.length > 0 && checks.every((c) => c.ok);
   const botPerms = policy.roles.find((r) => r.name === PROPOSER_ROLE)?.permissions ?? [];
+  // The charter lists only accounts the DAO really gives the proposer role.
+  const proposers = proposersOf(policy);
 
   return (
     <main className="immersive min-h-dvh pb-16">
@@ -137,7 +143,7 @@ export default async function Ledger({ params }: { params: Promise<{ dao: string
                     council members approve.
                   </p>
                 </li>
-                {bots.map((b) => (
+                {proposers.map((b) => (
                   <li key={b} className="flex gap-4">
                     <span className="foil font-display text-3xl font-semibold leading-none">II</span>
                     <p className="min-w-0 leading-relaxed">
@@ -230,8 +236,8 @@ export default async function Ledger({ params }: { params: Promise<{ dao: string
                           </span>
                         </div>
                         <div className="md:text-right">
-                          <span className={`stamp text-xs ${stampInk(p.status)}`} style={{ ["--r" as string]: p.id % 2 ? "-4deg" : "3deg" }}>
-                            {statusLabel(p.status, d.transfer)}
+                          <span className={`stamp text-xs ${stampInk(effectiveStatus(p, policy.proposal_period))}`} style={{ ["--r" as string]: p.id % 2 ? "-4deg" : "3deg" }}>
+                            {statusLabel(effectiveStatus(p, policy.proposal_period), d.transfer)}
                           </span>
                         </div>
                       </li>
